@@ -2,7 +2,8 @@
 
 The official code of [ABINet](https://arxiv.org/pdf/2103.06495.pdf) (CVPR 2021, Oral).
 
-ABINet uses a vision model and an explicit language model to recognize text in the wild, which are trained in end-to-end way. The language model (BCN) achieves bidirectional language representation in simulating cloze test, additionally utilizing iterative correction strategy.
+ABINet uses a vision model and an explicit language model to recognize text in the wild, which are trained in end-to-end way. The language model (BCN) achieves bidirectional language representation in
+simulating cloze test, additionally utilizing iterative correction strategy.
 
 ![framework](./figs/framework.png)
 
@@ -24,17 +25,19 @@ ABINet uses a vision model and an explicit language model to recognize text in t
 
 - Training datasets
 
-    1. [MJSynth](http://www.robots.ox.ac.uk/~vgg/data/text/) (MJ): 
+    1. [MJSynth](http://www.robots.ox.ac.uk/~vgg/data/text/) (MJ):
         - Use `tools/create_lmdb_dataset.py` to convert images into LMDB dataset
         - [LMDB dataset BaiduNetdisk(passwd:n23k)](https://pan.baidu.com/s/1mgnTiyoR8f6Cm655rFI4HQ)
     2. [SynthText](http://www.robots.ox.ac.uk/~vgg/data/scenetext/) (ST):
-        - Use `tools/crop_by_word_bb.py` to crop images from original [SynthText](http://www.robots.ox.ac.uk/~vgg/data/scenetext/) dataset, and convert images into LMDB dataset by `tools/create_lmdb_dataset.py`
+        - Use `tools/crop_by_word_bb.py` to crop images from original [SynthText](http://www.robots.ox.ac.uk/~vgg/data/scenetext/) dataset, and convert images into LMDB dataset
+          by `tools/create_lmdb_dataset.py`
         - [LMDB dataset BaiduNetdisk(passwd:n23k)](https://pan.baidu.com/s/1mgnTiyoR8f6Cm655rFI4HQ)
     3. [WikiText103](https://s3.amazonaws.com/research.metamind.io/wikitext/wikitext-103-v1.zip), which is only used for pre-trainig language models:
         - Use `notebooks/prepare_wikitext103.ipynb` to convert text into CSV format.
         - [CSV dataset BaiduNetdisk(passwd:dk01)](https://pan.baidu.com/s/1yabtnPYDKqhBb_Ie9PGFXA)
 
-- Evaluation datasets, LMDB datasets can be downloaded from [BaiduNetdisk(passwd:1dbv)](https://pan.baidu.com/s/1RUg3Akwp7n8kZYJ55rU5LQ), [GoogleDrive](https://drive.google.com/file/d/1dTI0ipu14Q1uuK4s4z32DqbqF3dJPdkk/view?usp=sharing).
+- Evaluation datasets, LMDB datasets can be downloaded from [BaiduNetdisk(passwd:1dbv)](https://pan.baidu.com/s/1RUg3Akwp7n8kZYJ55rU5LQ)
+  , [GoogleDrive](https://drive.google.com/file/d/1dTI0ipu14Q1uuK4s4z32DqbqF3dJPdkk/view?usp=sharing).
     1. ICDAR 2013 (IC13)
     2. ICDAR 2015 (IC15)
     3. IIIT5K Words (IIIT)
@@ -66,12 +69,10 @@ ABINet uses a vision model and an explicit language model to recognize text in t
 
 ### Pretrained Models
 
-Get the pretrained models from [BaiduNetdisk(passwd:kwck)](https://pan.baidu.com/s/1b3vyvPwvh_75FkPlp87czQ), [GoogleDrive](https://drive.google.com/file/d/1mYM_26qHUom_5NU7iutHneB_KHlLjL5y/view?usp=sharing). Performances of the pretrained models are summaried as follows:
+Get the pretrained models from [BaiduNetdisk(passwd:kwck)](https://pan.baidu.com/s/1b3vyvPwvh_75FkPlp87czQ)
+, [GoogleDrive](https://drive.google.com/file/d/1mYM_26qHUom_5NU7iutHneB_KHlLjL5y/view?usp=sharing). Performances of the pretrained models are summaried as follows:
 
-|Model|IC13|SVT|IIIT|IC15|SVTP|CUTE|AVG|
-|-|-|-|-|-|-|-|-|
-|ABINet-SV|97.1|92.7|95.2|84.0|86.7|88.5|91.4|
-|ABINet-LV|97.0|93.4|96.4|85.9|89.5|89.2|92.7|
+|Model|IC13|SVT|IIIT|IC15|SVTP|CUTE|AVG| |-|-|-|-|-|-|-|-| |ABINet-SV|97.1|92.7|95.2|84.0|86.7|88.5|91.4| |ABINet-LV|97.0|93.4|96.4|85.9|89.5|89.2|92.7|
 
 ## Training
 
@@ -87,29 +88,34 @@ Get the pretrained models from [BaiduNetdisk(passwd:kwck)](https://pan.baidu.com
     ```
     CUDA_VISIBLE_DEVICES=0,1,2,3 python main.py --config=configs/train_abinet.yaml
     ```
-Note:
-- You can set the `checkpoint` path for vision and language models separately for specific pretrained model, or set to `None` to train from scratch
 
+Note:
+
+- You can set the `checkpoint` path for vision and language models separately for specific pretrained model, or set to `None` to train from scratch
 
 ## Evaluation
 
 ```
 CUDA_VISIBLE_DEVICES=0 python main.py --config=configs/train_abinet.yaml --phase test --image_only
 ```
+
 Additional flags:
-- `--checkpoint /path/to/checkpoint` set the path of evaluation model 
+
+- `--checkpoint /path/to/checkpoint` set the path of evaluation model
 - `--test_root /path/to/dataset` set the path of evaluation dataset
 - `--model_eval [alignment|vision]` which sub-model to evaluate
 - `--image_only` disable dumping visualization of attention masks
 
-
 ## Visualization
+
 Successful and failure cases on low-quality images:
 
 ![cases](./figs/cases.png)
 
 ## Citation
+
 If you find our method useful for your reserach, please cite
+
 ```bash 
 @article{fang2021read,
   title={Read Like Humans: Autonomous, Bidirectional and Iterative Language Modeling for Scene Text Recognition},
@@ -119,7 +125,7 @@ If you find our method useful for your reserach, please cite
 }
  ```
 
- ## License
+## License
 
 This project is only free for academic research purposes, licensed under the 2-clause BSD License - see the LICENSE file for details.
 

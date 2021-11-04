@@ -1,10 +1,10 @@
 import logging
-import torch.nn as nn
+
 from fastai.vision import *
 
-from modules.model import _default_tfmer_cfg
 from modules.model import Model
-from modules.transformer import (PositionalEncoding, 
+from modules.model import _default_tfmer_cfg
+from modules.transformer import (PositionalEncoding,
                                  TransformerDecoder,
                                  TransformerDecoderLayer)
 
@@ -28,8 +28,8 @@ class BCNLanguage(Model):
         self.proj = nn.Linear(self.charset.num_classes, d_model, False)
         self.token_encoder = PositionalEncoding(d_model, max_len=self.max_length)
         self.pos_encoder = PositionalEncoding(d_model, dropout=0, max_len=self.max_length)
-        decoder_layer = TransformerDecoderLayer(d_model, nhead, d_inner, dropout, 
-                activation, self_attn=self.use_self_attn, debug=self.debug)
+        decoder_layer = TransformerDecoderLayer(d_model, nhead, d_inner, dropout,
+                                                activation, self_attn=self.use_self_attn, debug=self.debug)
         self.model = TransformerDecoder(decoder_layer, num_layers)
 
         self.cls = nn.Linear(d_model, self.charset.num_classes)
@@ -54,14 +54,14 @@ class BCNLanguage(Model):
         qeury = self.pos_encoder(zeros)
         location_mask = self._get_location_mask(self.max_length, tokens.device)
         output = self.model(qeury, embed,
-                tgt_key_padding_mask=padding_mask,
-                memory_mask=location_mask,
-                memory_key_padding_mask=padding_mask)  # (T, N, E)
+                            tgt_key_padding_mask=padding_mask,
+                            memory_mask=location_mask,
+                            memory_key_padding_mask=padding_mask)  # (T, N, E)
         output = output.permute(1, 0, 2)  # (N, T, E)
 
         logits = self.cls(output)  # (N, T, C)
         pt_lengths = self._get_length(logits)
 
-        res =  {'feature': output, 'logits': logits, 'pt_lengths': pt_lengths,
-                'loss_weight':self.loss_weight, 'name': 'language'}
+        res = {'feature': output, 'logits': logits, 'pt_lengths': pt_lengths,
+               'loss_weight': self.loss_weight, 'name': 'language'}
         return res

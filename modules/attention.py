@@ -1,6 +1,8 @@
 import torch
 import torch.nn as nn
+
 from .transformer import PositionalEncoding
+
 
 class Attention(nn.Module):
     def __init__(self, in_channels=512, max_length=25, n_feature=256):
@@ -35,9 +37,10 @@ def encoder_layer(in_c, out_c, k=3, s=2, p=1):
                          nn.BatchNorm2d(out_c),
                          nn.ReLU(True))
 
+
 def decoder_layer(in_c, out_c, k=3, s=1, p=1, mode='nearest', scale_factor=None, size=None):
-    align_corners = None if mode=='nearest' else True
-    return nn.Sequential(nn.Upsample(size=size, scale_factor=scale_factor, 
+    align_corners = None if mode == 'nearest' else True
+    return nn.Sequential(nn.Upsample(size=size, scale_factor=scale_factor,
                                      mode=mode, align_corners=align_corners),
                          nn.Conv2d(in_c, out_c, k, s, p),
                          nn.BatchNorm2d(out_c),
@@ -45,7 +48,7 @@ def decoder_layer(in_c, out_c, k=3, s=1, p=1, mode='nearest', scale_factor=None,
 
 
 class PositionAttention(nn.Module):
-    def __init__(self, max_length, in_channels=512, num_channels=64, 
+    def __init__(self, max_length, in_channels=512, num_channels=64,
                  h=8, w=32, mode='nearest', **kwargs):
         super().__init__()
         self.max_length = max_length
@@ -85,7 +88,7 @@ class PositionAttention(nn.Module):
         q = self.pos_encoder(zeros)  # (T, N, E)
         q = q.permute(1, 0, 2)  # (N, T, E)
         q = self.project(q)  # (N, T, E)
-        
+
         # calculate attention
         attn_scores = torch.bmm(q, k.flatten(2, 3))  # (N, T, (H*W))
         attn_scores = attn_scores / (E ** 0.5)

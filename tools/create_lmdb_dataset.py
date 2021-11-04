@@ -1,10 +1,10 @@
 """ a modified version of CRNN torch repository https://github.com/bgshih/crnn/blob/master/tool/create_dataset.py """
 
-import fire
 import os
-import lmdb
-import cv2
 
+import cv2
+import fire
+import lmdb
 import numpy as np
 
 
@@ -77,7 +77,7 @@ def createDataset(inputPath, gtFile, outputPath, checkValid=True):
             cache = {}
             print('Written %d / %d' % (cnt, nSamples))
         cnt += 1
-    nSamples = cnt-1
+    nSamples = cnt - 1
     cache['num-samples'.encode()] = str(nSamples).encode()
     writeCache(env, cache)
     print('Created dataset with %d samples' % nSamples)

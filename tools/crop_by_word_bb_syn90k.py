@@ -2,13 +2,14 @@
 # Locate script with gt.mat
 # $ python crop_by_word_bb.py
 
+import math
 import os
 import re
-import cv2
-import scipy.io as sio
 from itertools import chain
+
+import cv2
 import numpy as np
-import math
+import scipy.io as sio
 
 mat_contents = sio.loadmat('gt.mat')
 
@@ -20,23 +21,22 @@ err_file = open('err_oabc.txt', 'a')
 
 for img_indx in range(start_img_indx, len(image_names)):
 
-
     # Get image name
     image_name_new = image_names[img_indx][0]
     # print(image_name_new)
-    image_name = '/home/yxwang/pytorch/dataset/SynthText/img/'+ image_name_new
+    image_name = '/home/yxwang/pytorch/dataset/SynthText/img/' + image_name_new
     # print('IMAGE : {}.{}'.format(img_indx, image_name))
     print('evaluating {} image'.format(img_indx), end='\r')
     # Get text in image
     txt = mat_contents['txt'][0][img_indx]
     txt = [re.split(' \n|\n |\n| ', t.strip()) for t in txt]
     txt = list(chain(*txt))
-    txt = [t for t in txt if len(t) > 0 ]
+    txt = [t for t in txt if len(t) > 0]
     # print(txt) # ['Lines:', 'I', 'lost', 'Kevin', 'will', 'line', 'and', 'and', 'the', '(and', 'the', 'out', 'you', "don't", 'pkg']
     # assert 1<0
 
     # Open image
-    #img = Image.open(image_name)
+    # img = Image.open(image_name)
     img = cv2.imread(image_name, cv2.IMREAD_COLOR)
     img_height, img_width, _ = img.shape
 
@@ -75,8 +75,8 @@ for img_indx in range(start_img_indx, len(image_names)):
                                [wordBB[0][3], wordBB[1][3]],
                                [wordBB[0][1], wordBB[1][1]],
                                [wordBB[0][2], wordBB[1][2]]])
-            height = math.sqrt((wordBB[0][0] - wordBB[0][3])**2 + (wordBB[1][0] - wordBB[1][3])**2)
-            width = math.sqrt((wordBB[0][0] - wordBB[0][1])**2 + (wordBB[1][0] - wordBB[1][1])**2)
+            height = math.sqrt((wordBB[0][0] - wordBB[0][3]) ** 2 + (wordBB[1][0] - wordBB[1][3]) ** 2)
+            width = math.sqrt((wordBB[0][0] - wordBB[0][1]) ** 2 + (wordBB[1][0] - wordBB[1][1]) ** 2)
 
             # Coord validation check
             if (height * width) <= 0:
@@ -118,9 +118,9 @@ for img_indx in range(start_img_indx, len(image_names)):
             # print(img.shape)
             # assert 1<0
             if len(img.shape) == 3:
-                img_cropped = img[ y_min:y_max:1, x_min:x_max:1, :]
+                img_cropped = img[y_min:y_max:1, x_min:x_max:1, :]
             else:
-                img_cropped = img[ y_min:y_max:1, x_min:x_max:1]
+                img_cropped = img[y_min:y_max:1, x_min:x_max:1]
             dir_name = '/home/yxwang/pytorch/dataset/SynthText/cropped-oabc/{}'.format(image_name_new.split('/')[0])
             # print('dir_name--',dir_name)
             if not os.path.exists(dir_name):
@@ -147,7 +147,7 @@ for img_indx in range(start_img_indx, len(image_names)):
         # assert 1 < 0
     else:
         err_log = 'word_box_mismatch : {}\t{}\t{}\n'.format(image_name, mat_contents['txt'][0][
-                                                            img_indx], mat_contents['wordBB'][0][img_indx])
+            img_indx], mat_contents['wordBB'][0][img_indx])
         err_file.write(err_log)
         # print(err_log)
 gt_file.close()

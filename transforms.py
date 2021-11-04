@@ -12,22 +12,31 @@ from torchvision.transforms import Compose
 def sample_asym(magnitude, size=None):
     return np.random.beta(1, 4, size) * magnitude
 
+
 def sample_sym(magnitude, size=None):
     return (np.random.beta(4, 4, size=size) - 0.5) * 2 * magnitude
+
 
 def sample_uniform(low, high, size=None):
     return np.random.uniform(low, high, size=size)
 
+
 def get_interpolation(type='random'):
     if type == 'random':
         choice = [cv2.INTER_NEAREST, cv2.INTER_LINEAR, cv2.INTER_CUBIC, cv2.INTER_AREA]
-        interpolation = choice[random.randint(0, len(choice)-1)]
-    elif type == 'nearest': interpolation = cv2.INTER_NEAREST
-    elif type == 'linear': interpolation = cv2.INTER_LINEAR
-    elif type == 'cubic': interpolation = cv2.INTER_CUBIC
-    elif type == 'area': interpolation = cv2.INTER_AREA
-    else: raise TypeError('Interpolation types only nearest, linear, cubic, area are supported!')
+        interpolation = choice[random.randint(0, len(choice) - 1)]
+    elif type == 'nearest':
+        interpolation = cv2.INTER_NEAREST
+    elif type == 'linear':
+        interpolation = cv2.INTER_LINEAR
+    elif type == 'cubic':
+        interpolation = cv2.INTER_CUBIC
+    elif type == 'area':
+        interpolation = cv2.INTER_AREA
+    else:
+        raise TypeError('Interpolation types only nearest, linear, cubic, area are supported!')
     return interpolation
+
 
 class CVRandomRotation(object):
     def __init__(self, degrees=15):
@@ -38,19 +47,20 @@ class CVRandomRotation(object):
     @staticmethod
     def get_params(degrees):
         return sample_sym(degrees)
-    
+
     def __call__(self, img):
         angle = self.get_params(self.degrees)
         src_h, src_w = img.shape[:2]
-        M = cv2.getRotationMatrix2D(center=(src_w/2, src_h/2), angle=angle, scale=1.0)
-        abs_cos, abs_sin = abs(M[0,0]), abs(M[0,1])
+        M = cv2.getRotationMatrix2D(center=(src_w / 2, src_h / 2), angle=angle, scale=1.0)
+        abs_cos, abs_sin = abs(M[0, 0]), abs(M[0, 1])
         dst_w = int(src_h * abs_sin + src_w * abs_cos)
         dst_h = int(src_h * abs_cos + src_w * abs_sin)
-        M[0, 2] += (dst_w - src_w)/2
-        M[1, 2] += (dst_h - src_h)/2
-        
+        M[0, 2] += (dst_w - src_w) / 2
+        M[1, 2] += (dst_h - src_h) / 2
+
         flags = get_interpolation()
         return cv2.warpAffine(img, M, (dst_w, dst_h), flags=flags, borderMode=cv2.BORDER_REPLICATE)
+
 
 class CVRandomAffine(object):
     def __init__(self, degrees, translate=None, scale=None, shear=None):
@@ -85,11 +95,11 @@ class CVRandomAffine(object):
                 self.shear = shear
         else:
             self.shear = shear
-            
+
     def _get_inverse_affine_matrix(self, center, angle, translate, scale, shear):
         # https://github.com/pytorch/vision/blob/v0.4.0/torchvision/transforms/functional.py#L717
         from numpy import sin, cos, tan
-        
+
         if isinstance(shear, numbers.Number):
             shear = [shear, 0]
 
@@ -126,7 +136,7 @@ class CVRandomAffine(object):
         return M
 
     @staticmethod
-    def get_params(degrees, translate, scale_ranges, shears, height):        
+    def get_params(degrees, translate, scale_ranges, shears, height):
         angle = sample_sym(degrees)
         if translate is not None:
             max_dx = translate[0] * height
@@ -149,20 +159,19 @@ class CVRandomAffine(object):
             shear = 0.0
 
         return angle, translations, scale, shear
-    
-    
+
     def __call__(self, img):
         src_h, src_w = img.shape[:2]
         angle, translate, scale, shear = self.get_params(
-                self.degrees, self.translate, self.scale, self.shear, src_h)
+            self.degrees, self.translate, self.scale, self.shear, src_h)
 
-        M = self._get_inverse_affine_matrix((src_w/2, src_h/2), angle, (0, 0), scale, shear)
-        M = np.array(M).reshape(2,3)
-        
+        M = self._get_inverse_affine_matrix((src_w / 2, src_h / 2), angle, (0, 0), scale, shear)
+        M = np.array(M).reshape(2, 3)
+
         startpoints = [(0, 0), (src_w - 1, 0), (src_w - 1, src_h - 1), (0, src_h - 1)]
-        project = lambda x, y, a, b, c: int(a*x + b*y + c)
+        project = lambda x, y, a, b, c: int(a * x + b * y + c)
         endpoints = [(project(x, y, *M[0]), project(x, y, *M[1])) for x, y in startpoints]
-        
+
         rect = cv2.minAreaRect(np.array(endpoints))
         bbox = cv2.boxPoints(rect).astype(dtype=np.int)
         max_x, max_y = bbox[:, 0].max(), bbox[:, 1].max()
@@ -172,15 +181,16 @@ class CVRandomAffine(object):
         dst_h = int(max_y - min_y)
         M[0, 2] += (dst_w - src_w) / 2
         M[1, 2] += (dst_h - src_h) / 2
-        
+
         # add translate
         dst_w += int(abs(translate[0]))
         dst_h += int(abs(translate[1]))
         if translate[0] < 0: M[0, 2] += abs(translate[0])
         if translate[1] < 0: M[1, 2] += abs(translate[1])
-            
+
         flags = get_interpolation()
-        return cv2.warpAffine(img, M, (dst_w , dst_h), flags=flags, borderMode=cv2.BORDER_REPLICATE)
+        return cv2.warpAffine(img, M, (dst_w, dst_h), flags=flags, borderMode=cv2.BORDER_REPLICATE)
+
 
 class CVRandomPerspective(object):
     def __init__(self, distortion=0.5):
@@ -189,15 +199,15 @@ class CVRandomPerspective(object):
     def get_params(self, width, height, distortion):
         offset_h = sample_asym(distortion * height / 2, size=4).astype(dtype=np.int)
         offset_w = sample_asym(distortion * width / 2, size=4).astype(dtype=np.int)
-        topleft  = (            offset_w[0],              offset_h[0])
-        topright = (width - 1 - offset_w[1],              offset_h[1])
+        topleft = (offset_w[0], offset_h[0])
+        topright = (width - 1 - offset_w[1], offset_h[1])
         botright = (width - 1 - offset_w[2], height - 1 - offset_h[2])
-        botleft  = (            offset_w[3], height - 1 - offset_h[3])
+        botleft = (offset_w[3], height - 1 - offset_h[3])
 
         startpoints = [(0, 0), (width - 1, 0), (width - 1, height - 1), (0, height - 1)]
         endpoints = [topleft, topright, botright, botleft]
         return np.array(startpoints, dtype=np.float32), np.array(endpoints, dtype=np.float32)
-    
+
     def __call__(self, img):
         height, width = img.shape[:2]
         startpoints, endpoints = self.get_params(width, height, self.distortion)
@@ -210,13 +220,14 @@ class CVRandomPerspective(object):
         min_x, min_y = bbox[:, 0].min(), bbox[:, 1].min()
         min_x, min_y = max(min_x, 0), max(min_y, 0)
 
-        flags = get_interpolation() 
+        flags = get_interpolation()
         img = cv2.warpPerspective(img, M, (max_x, max_y), flags=flags, borderMode=cv2.BORDER_REPLICATE)
         img = img[min_y:, min_x:]
         return img
 
+
 class CVRescale(object):
-    
+
     def __init__(self, factor=4, base_size=(128, 512)):
         """ Define image scales using gaussian pyramid and rescale image to target scale.
         
@@ -234,14 +245,15 @@ class CVRescale(object):
         self.base_h, self.base_w = base_size[:2]
 
     def __call__(self, img):
-        if self.factor == 0: return img 
+        if self.factor == 0: return img
         src_h, src_w = img.shape[:2]
-        cur_w, cur_h = self.base_w, self.base_h        
+        cur_w, cur_h = self.base_w, self.base_h
         scale_img = cv2.resize(img, (cur_w, cur_h), interpolation=get_interpolation())
-        for _ in range(self.factor): 
+        for _ in range(self.factor):
             scale_img = cv2.pyrDown(scale_img)
         scale_img = cv2.resize(scale_img, (src_w, src_h), interpolation=get_interpolation())
         return scale_img
+
 
 class CVGaussianNoise(object):
     def __init__(self, mean=0, var=20):
@@ -252,11 +264,12 @@ class CVGaussianNoise(object):
             self.var = int(sample_uniform(var[0], var[1]))
         else:
             raise Exception('degree must be number or list with length 2')
-        
+
     def __call__(self, img):
-        noise = np.random.normal(self.mean, self.var**0.5, img.shape)
+        noise = np.random.normal(self.mean, self.var ** 0.5, img.shape)
         img = np.clip(img + noise, 0, 255).astype(np.uint8)
         return img
+
 
 class CVMotionBlur(object):
     def __init__(self, degrees=12, angle=90):
@@ -278,9 +291,10 @@ class CVMotionBlur(object):
         img = np.clip(img, 0, 255).astype(np.uint8)
         return img
 
+
 class CVGeometry(object):
-    def __init__(self, degrees=15, translate=(0.3, 0.3), scale=(0.5, 2.), 
-                       shear=(45, 15), distortion=0.5, p=0.5):
+    def __init__(self, degrees=15, translate=(0.3, 0.3), scale=(0.5, 2.),
+                 shear=(45, 15), distortion=0.5, p=0.5):
         self.p = p
         type_p = random.random()
         if type_p < 0.33:
@@ -294,7 +308,9 @@ class CVGeometry(object):
         if random.random() < self.p:
             img = np.array(img)
             return Image.fromarray(self.transforms(img))
-        else: return img
+        else:
+            return img
+
 
 class CVDeterioration(object):
     def __init__(self, var, degrees, factor, p=0.5):
@@ -306,24 +322,27 @@ class CVDeterioration(object):
             transforms.append(CVMotionBlur(degrees=degrees))
         if factor is not None:
             transforms.append(CVRescale(factor=factor))
-            
+
         random.shuffle(transforms)
         transforms = Compose(transforms)
-        self.transforms =  transforms
-        
+        self.transforms = transforms
+
     def __call__(self, img):
         if random.random() < self.p:
             img = np.array(img)
             return Image.fromarray(self.transforms(img))
-        else: return img
+        else:
+            return img
 
 
 class CVColorJitter(object):
     def __init__(self, brightness=0.5, contrast=0.5, saturation=0.5, hue=0.1, p=0.5):
         self.p = p
-        self.transforms = transforms.ColorJitter(brightness=brightness, contrast=contrast, 
+        self.transforms = transforms.ColorJitter(brightness=brightness, contrast=contrast,
                                                  saturation=saturation, hue=hue)
 
     def __call__(self, img):
-        if random.random() < self.p: return self.transforms(img)
-        else: return img
+        if random.random() < self.p:
+            return self.transforms(img)
+        else:
+            return img

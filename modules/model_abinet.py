@@ -1,10 +1,8 @@
-import torch
-import torch.nn as nn
 from fastai.vision import *
 
-from .model_vision import BaseVision
-from .model_language import BCNLanguage
 from .model_alignment import BaseAlignment
+from .model_language import BCNLanguage
+from .model_vision import BaseVision
 
 
 class ABINetModel(nn.Module):
@@ -25,6 +23,6 @@ class ABINetModel(nn.Module):
         if not self.use_alignment:
             return l_res, v_res
         l_feature, v_feature = l_res['feature'], v_res['feature']
-        
+
         a_res = self.alignment(l_feature, v_feature)
         return a_res, l_res, v_res

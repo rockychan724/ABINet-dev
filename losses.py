@@ -1,7 +1,5 @@
 from fastai.vision import *
 
-from modules.model import Model
-
 
 class MultiLosses(nn.Module):
     def __init__(self, one_hot=True):
@@ -19,9 +17,13 @@ class MultiLosses(nn.Module):
     def _merge_list(self, all_res):
         if not isinstance(all_res, (list, tuple)):
             return all_res
+
         def merge(items):
-            if isinstance(items[0], torch.Tensor): return torch.cat(items, dim=0)
-            else: return items[0]
+            if isinstance(items[0], torch.Tensor):
+                return torch.cat(items, dim=0)
+            else:
+                return items[0]
+
         res = dict()
         for key in all_res[0].keys():
             items = [r[key] for r in all_res]
@@ -64,9 +66,14 @@ class SoftCrossEntropyLoss(nn.Module):
         self.reduction = reduction
 
     def forward(self, input, target, softmax=True):
-        if softmax: log_prob = F.log_softmax(input, dim=-1)
-        else: log_prob = torch.log(input)
+        if softmax:
+            log_prob = F.log_softmax(input, dim=-1)
+        else:
+            log_prob = torch.log(input)
         loss = -(target * log_prob).sum(dim=-1)
-        if self.reduction == "mean": return loss.mean()
-        elif self.reduction == "sum": return loss.sum()
-        else: return loss
+        if self.reduction == "mean":
+            return loss.mean()
+        elif self.reduction == "sum":
+            return loss.sum()
+        else:
+            return loss

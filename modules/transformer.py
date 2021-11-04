@@ -12,29 +12,29 @@ from torch.nn import functional as F
 from torch.nn.init import constant_, xavier_uniform_
 
 
-def multi_head_attention_forward(query,                           # type: Tensor
-                                 key,                             # type: Tensor
-                                 value,                           # type: Tensor
-                                 embed_dim_to_check,              # type: int
-                                 num_heads,                       # type: int
-                                 in_proj_weight,                  # type: Tensor
-                                 in_proj_bias,                    # type: Tensor
-                                 bias_k,                          # type: Optional[Tensor]
-                                 bias_v,                          # type: Optional[Tensor]
-                                 add_zero_attn,                   # type: bool
-                                 dropout_p,                       # type: float
-                                 out_proj_weight,                 # type: Tensor
-                                 out_proj_bias,                   # type: Tensor
-                                 training=True,                   # type: bool
-                                 key_padding_mask=None,           # type: Optional[Tensor]
-                                 need_weights=True,               # type: bool
-                                 attn_mask=None,                  # type: Optional[Tensor]
+def multi_head_attention_forward(query,  # type: Tensor
+                                 key,  # type: Tensor
+                                 value,  # type: Tensor
+                                 embed_dim_to_check,  # type: int
+                                 num_heads,  # type: int
+                                 in_proj_weight,  # type: Tensor
+                                 in_proj_bias,  # type: Tensor
+                                 bias_k,  # type: Optional[Tensor]
+                                 bias_v,  # type: Optional[Tensor]
+                                 add_zero_attn,  # type: bool
+                                 dropout_p,  # type: float
+                                 out_proj_weight,  # type: Tensor
+                                 out_proj_bias,  # type: Tensor
+                                 training=True,  # type: bool
+                                 key_padding_mask=None,  # type: Optional[Tensor]
+                                 need_weights=True,  # type: bool
+                                 attn_mask=None,  # type: Optional[Tensor]
                                  use_separate_proj_weight=False,  # type: bool
-                                 q_proj_weight=None,              # type: Optional[Tensor]
-                                 k_proj_weight=None,              # type: Optional[Tensor]
-                                 v_proj_weight=None,              # type: Optional[Tensor]
-                                 static_k=None,                   # type: Optional[Tensor]
-                                 static_v=None                    # type: Optional[Tensor]
+                                 q_proj_weight=None,  # type: Optional[Tensor]
+                                 k_proj_weight=None,  # type: Optional[Tensor]
+                                 v_proj_weight=None,  # type: Optional[Tensor]
+                                 static_k=None,  # type: Optional[Tensor]
+                                 static_v=None  # type: Optional[Tensor]
                                  ):
     # type: (...) -> Tuple[Tensor, Optional[Tensor]]
     r"""
@@ -194,7 +194,7 @@ def multi_head_attention_forward(query,                           # type: Tensor
 
     if attn_mask is not None:
         assert attn_mask.dtype == torch.float32 or attn_mask.dtype == torch.float64 or \
-            attn_mask.dtype == torch.float16 or attn_mask.dtype == torch.uint8 or attn_mask.dtype == torch.bool, \
+               attn_mask.dtype == torch.float16 or attn_mask.dtype == torch.uint8 or attn_mask.dtype == torch.bool, \
             'Only float, byte, and bool types are supported for attn_mask, not {}'.format(attn_mask.dtype)
         if attn_mask.dtype == torch.uint8:
             warnings.warn("Byte tensor for attn_mask in nn.MultiheadAttention is deprecated. Use bool tensor instead.")
@@ -271,7 +271,6 @@ def multi_head_attention_forward(query,                           # type: Tensor
         else:
             attn_output_weights += attn_mask
 
-
     if key_padding_mask is not None:
         attn_output_weights = attn_output_weights.view(bsz, num_heads, tgt_len, src_len)
         attn_output_weights = attn_output_weights.masked_fill(
@@ -295,6 +294,7 @@ def multi_head_attention_forward(query,                           # type: Tensor
         return attn_output, attn_output_weights.sum(dim=1) / num_heads
     else:
         return attn_output, None
+
 
 class MultiheadAttention(Module):
     r"""Allows the model to jointly attend to information
@@ -676,6 +676,7 @@ class TransformerDecoder(Module):
 
         return output
 
+
 class TransformerEncoderLayer(Module):
     r"""TransformerEncoderLayer is made up of self-attn and feedforward network.
     This standard encoder layer is based on the paper "Attention Is All You Need".
@@ -697,7 +698,7 @@ class TransformerEncoderLayer(Module):
         >>> out = encoder_layer(src)
     """
 
-    def __init__(self, d_model, nhead, dim_feedforward=2048, dropout=0.1, 
+    def __init__(self, d_model, nhead, dim_feedforward=2048, dropout=0.1,
                  activation="relu", debug=False):
         super(TransformerEncoderLayer, self).__init__()
         self.debug = debug
@@ -732,14 +733,14 @@ class TransformerEncoderLayer(Module):
             see the docs in Transformer class.
         """
         src2, attn = self.self_attn(src, src, src, attn_mask=src_mask,
-                              key_padding_mask=src_key_padding_mask)
+                                    key_padding_mask=src_key_padding_mask)
         if self.debug: self.attn = attn
         src = src + self.dropout1(src2)
         src = self.norm1(src)
         src2 = self.linear2(self.dropout(self.activation(self.linear1(src))))
         src = src + self.dropout2(src2)
         src = self.norm2(src)
-        
+
         return src
 
 
@@ -765,7 +766,7 @@ class TransformerDecoderLayer(Module):
         >>> out = decoder_layer(tgt, memory)
     """
 
-    def __init__(self, d_model, nhead, dim_feedforward=2048, dropout=0.1, 
+    def __init__(self, d_model, nhead, dim_feedforward=2048, dropout=0.1,
                  activation="relu", self_attn=True, siamese=False, debug=False):
         super(TransformerDecoderLayer, self).__init__()
         self.has_self_attn, self.siamese = self_attn, siamese
@@ -813,17 +814,17 @@ class TransformerDecoderLayer(Module):
         """
         if self.has_self_attn:
             tgt2, attn = self.self_attn(tgt, tgt, tgt, attn_mask=tgt_mask,
-                                key_padding_mask=tgt_key_padding_mask)
+                                        key_padding_mask=tgt_key_padding_mask)
             tgt = tgt + self.dropout1(tgt2)
             tgt = self.norm1(tgt)
             if self.debug: self.attn = attn
         tgt2, attn2 = self.multihead_attn(tgt, memory, memory, attn_mask=memory_mask,
-                                   key_padding_mask=memory_key_padding_mask)
+                                          key_padding_mask=memory_key_padding_mask)
         if self.debug: self.attn2 = attn2
 
         if self.siamese:
             tgt3, attn3 = self.multihead_attn2(tgt, memory2, memory2, attn_mask=memory_mask2,
-                            key_padding_mask=memory_key_padding_mask2)
+                                               key_padding_mask=memory_key_padding_mask2)
             tgt = tgt + self.dropout2(tgt3)
             if self.debug: self.attn3 = attn3
 
@@ -832,7 +833,7 @@ class TransformerDecoderLayer(Module):
         tgt2 = self.linear2(self.dropout(self.activation(self.linear1(tgt))))
         tgt = tgt + self.dropout3(tgt2)
         tgt = self.norm3(tgt)
-        
+
         return tgt
 
 

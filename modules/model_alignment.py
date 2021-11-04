@@ -1,5 +1,3 @@
-import torch
-import torch.nn as nn
 from fastai.vision import *
 
 from modules.model import Model, _default_tfmer_cfg
@@ -30,5 +28,5 @@ class BaseAlignment(Model):
         logits = self.cls(output)  # (N, T, C)
         pt_lengths = self._get_length(logits)
 
-        return {'logits': logits, 'pt_lengths': pt_lengths, 'loss_weight':self.loss_weight,
+        return {'logits': logits, 'pt_lengths': pt_lengths, 'loss_weight': self.loss_weight,
                 'name': 'alignment'}

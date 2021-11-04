@@ -1,5 +1,5 @@
 import logging
-import torch.nn as nn
+
 from fastai.vision import *
 
 from modules.attention import *
@@ -16,8 +16,9 @@ class BaseVision(Model):
 
         if config.model_vision_backbone == 'transformer':
             self.backbone = ResTranformer(config)
-        else: self.backbone = resnet45()
-        
+        else:
+            self.backbone = resnet45()
+
         if config.model_vision_attention == 'position':
             mode = ifnone(config.model_vision_attention_mode, 'nearest')
             self.attention = PositionAttention(
@@ -27,7 +28,7 @@ class BaseVision(Model):
         elif config.model_vision_attention == 'attention':
             self.attention = Attention(
                 max_length=config.dataset_max_length + 1,  # additional stop token
-                n_feature=8*32,
+                n_feature=8 * 32,
             )
         else:
             raise Exception(f'{config.model_vision_attention} is not valid.')
@@ -40,8 +41,8 @@ class BaseVision(Model):
     def forward(self, images, *args):
         features = self.backbone(images)  # (N, E, H, W)
         attn_vecs, attn_scores = self.attention(features)  # (N, T, E), (N, T, H, W)
-        logits = self.cls(attn_vecs) # (N, T, C)
+        logits = self.cls(attn_vecs)  # (N, T, C)
         pt_lengths = self._get_length(logits)
 
         return {'feature': attn_vecs, 'logits': logits, 'pt_lengths': pt_lengths,
-                'attn_scores': attn_scores, 'loss_weight':self.loss_weight, 'name': 'vision'}
+                'attn_scores': attn_scores, 'loss_weight': self.loss_weight, 'name': 'vision'}

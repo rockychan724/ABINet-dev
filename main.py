@@ -1,11 +1,7 @@
 import argparse
 import logging
-import os
-import random
 
-import torch
 from fastai.callbacks.general_sched import GeneralScheduler, TrainingPhase
-from fastai.distributed import *
 from fastai.vision import *
 from torch.backends import cudnn
 
@@ -23,13 +19,15 @@ def _set_random_seed(seed):
         logging.warning('You have chosen to seed training. '
                         'This will slow down your training!')
 
+
 def _get_training_phases(config, n):
     lr = np.array(config.optimizer_lr)
     periods = config.optimizer_scheduler_periods
     sigma = [config.optimizer_scheduler_gamma ** i for i in range(len(periods))]
     phases = [TrainingPhase(n * periods[i]).schedule_hp('lr', lr * sigma[i])
-                for i in range(len(periods))]
+              for i in range(len(periods))]
     return phases
+
 
 def _get_dataset(ds_type, paths, is_training, config, **kwargs):
     kwargs.update({
@@ -45,8 +43,10 @@ def _get_dataset(ds_type, paths, is_training, config, **kwargs):
         'one_hot_y': config.dataset_one_hot_y,
     })
     datasets = [ds_type(p, **kwargs) for p in paths]
-    if len(datasets) > 1: return MyConcatDataset(datasets)
-    else: return datasets[0]
+    if len(datasets) > 1:
+        return MyConcatDataset(datasets)
+    else:
+        return datasets[0]
 
 
 def _get_language_databaunch(config):
@@ -74,6 +74,7 @@ def _get_language_databaunch(config):
         logging.info(f'{len(data.valid_ds)} valid items found.')
     return data
 
+
 def _get_databaunch(config):
     # An awkward way to reduce loadding data time during test
     if config.global_phase == 'test': config.dataset_train_roots = config.dataset_test_roots
@@ -92,8 +93,9 @@ def _get_databaunch(config):
     logging.info(f'{len(data.train_ds)} training items found.')
     if not data.empty_val:
         logging.info(f'{len(data.valid_ds)} valid items found.')
-    
+
     return data
+
 
 def _get_model(config):
     import importlib
@@ -113,7 +115,7 @@ def _get_learner(config, data, model, local_rank=None):
             charset_path=config.dataset_charset_path,
             max_length=config.dataset_max_length + 1,
             case_sensitive=config.dataset_eval_case_sensisitves,
-            model_eval=config.model_eval)] 
+            model_eval=config.model_eval)]
     else:
         metrics = [TextAccuracy(
             charset_path=config.dataset_charset_path,
@@ -122,18 +124,18 @@ def _get_learner(config, data, model, local_rank=None):
             model_eval=config.model_eval)]
     opt_type = getattr(torch.optim, config.optimizer_type)
     learner = Learner(data, model, silent=True, model_dir='.',
-        true_wd=config.optimizer_true_wd, 
-        wd=config.optimizer_wd,
-        bn_wd=config.optimizer_bn_wd,
-        path=config.global_workdir,
-        metrics=metrics,
-        opt_func=partial(opt_type, **config.optimizer_args or dict()), 
-        loss_func=MultiLosses(one_hot=config.dataset_one_hot_y))
+                      true_wd=config.optimizer_true_wd,
+                      wd=config.optimizer_wd,
+                      bn_wd=config.optimizer_bn_wd,
+                      path=config.global_workdir,
+                      metrics=metrics,
+                      opt_func=partial(opt_type, **config.optimizer_args or dict()),
+                      loss_func=MultiLosses(one_hot=config.dataset_one_hot_y))
     learner.split(lambda m: children(m))
 
     if config.global_phase == 'train':
         num_replicas = 1 if local_rank is None else torch.distributed.get_world_size()
-        phases = _get_training_phases(config, len(learner.data.train_dl)//num_replicas)
+        phases = _get_training_phases(config, len(learner.data.train_dl) // num_replicas)
         learner.callback_fns += [
             partial(GeneralScheduler, phases=phases),
             partial(GradientClipping, clip=config.optimizer_clip_grad),
@@ -146,10 +148,10 @@ def _get_learner(config, data, model, local_rank=None):
     else:
         learner.callbacks += [
             DumpPrediction(learn=learner,
-                    dataset='-'.join([Path(p).name for p in config.dataset_test_roots]),charset_path=config.dataset_charset_path,
-                    model_eval=config.model_eval,
-                    debug=config.global_debug,
-                    image_only=config.global_image_only)]
+                           dataset='-'.join([Path(p).name for p in config.dataset_test_roots]), charset_path=config.dataset_charset_path,
+                           model_eval=config.model_eval,
+                           debug=config.global_debug,
+                           image_only=config.global_image_only)]
 
     learner.rank = local_rank
     if local_rank is not None:
@@ -169,8 +171,8 @@ def _get_learner(config, data, model, local_rank=None):
             learner.load(buffer, strict=strict)
         else:
             from distutils.dir_util import copy_tree
-            src = Path('/data/fangsc/model')/config.global_name
-            trg = Path('/output')/config.global_name
+            src = Path('/data/fangsc/model') / config.global_name
+            trg = Path('/output') / config.global_name
             if src.exists(): copy_tree(str(src), str(trg))
             learner.load(config.model_checkpoint, strict=strict)
         logging.info(f'Read model from {config.model_checkpoint}')
@@ -178,11 +180,12 @@ def _get_learner(config, data, model, local_rank=None):
         learner.load(f'best-{config.global_name}', strict=strict)
         logging.info(f'Read model from best-{config.global_name}')
 
-    if learner.opt_func.func.__name__ == 'Adadelta':    # fastai bug, fix after 1.0.60
+    if learner.opt_func.func.__name__ == 'Adadelta':  # fastai bug, fix after 1.0.60
         learner.fit(epochs=0, lr=config.optimizer_lr)
         learner.opt.mom = 0.
 
     return learner
+
 
 def main():
     parser = argparse.ArgumentParser()
@@ -196,7 +199,7 @@ def main():
     parser.add_argument('--debug', action='store_true', default=None)
     parser.add_argument('--image_only', action='store_true', default=None)
     parser.add_argument('--model_strict', action='store_false', default=None)
-    parser.add_argument('--model_eval', type=str, default=None, 
+    parser.add_argument('--model_eval', type=str, default=None,
                         choices=['alignment', 'vision', 'language'])
     args = parser.parse_args()
     config = Config(args.config)
@@ -220,8 +223,10 @@ def main():
         torch.distributed.init_process_group(backend='nccl', init_method='env://')
 
     logging.info('Construct dataset.')
-    if config.global_stage == 'pretrain-language': data = _get_language_databaunch(config)
-    else: data = _get_databaunch(config)
+    if config.global_stage == 'pretrain-language':
+        data = _get_language_databaunch(config)
+    else:
+        data = _get_databaunch(config)
 
     logging.info('Construct model.')
     model = _get_model(config)
@@ -241,6 +246,7 @@ def main():
                   f'ted = {last_metrics[3]:6.3f},  ned = {last_metrics[4]:6.0f},  ' \
                   f'ted/w = {last_metrics[5]:6.3f}, '
         logging.info(log_str)
+
 
 if __name__ == '__main__':
     main()

@@ -3,9 +3,9 @@ import torch.nn as nn
 
 from utils import CharsetMapper
 
-
-_default_tfmer_cfg = dict(d_model=512, nhead=8, d_inner=2048, # 1024
+_default_tfmer_cfg = dict(d_model=512, nhead=8, d_inner=2048,  # 1024
                           dropout=0.1, activation='relu')
+
 
 class Model(nn.Module):
 
@@ -13,7 +13,7 @@ class Model(nn.Module):
         super().__init__()
         self.max_length = config.dataset_max_length + 1
         self.charset = CharsetMapper(config.dataset_charset_path, max_length=self.max_length)
-    
+
     def load(self, source, device=None, strict=True):
         state = torch.load(source, map_location=device)
         self.load_state_dict(state['model'], strict=strict)
