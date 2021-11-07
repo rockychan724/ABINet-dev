@@ -7,7 +7,7 @@ from modules.transformer import (PositionalEncoding,
                                  TransformerEncoderLayer)
 
 
-class ResTranformer(nn.Module):
+class ResTransformer(nn.Module):
     def __init__(self, config):
         super().__init__()
         self.resnet = resnet45()

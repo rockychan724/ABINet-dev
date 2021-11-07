@@ -11,7 +11,7 @@ from utils import CharsetMapper, onehot
 
 
 class ImageDataset(Dataset):
-    "`ImageDataset` read data from LMDB database."
+    """`ImageDataset` read data from LMDB database."""
 
     def __init__(self,
                  path: PathOrStr,
@@ -127,10 +127,11 @@ class ImageDataset(Dataset):
                 traceback.print_exc()
                 logging.info(f'Corrupted image is found: {self.name}, {idx}, {label}, {len(label)}')
                 return self._next_image(idx)
-            return image, label, idx
+        return image, label, idx
 
     def _process_training(self, image):
-        if self.data_aug: image = self.augment_tfs(image)
+        if self.data_aug:
+            image = self.augment_tfs(image)
         image = self.resize(np.array(image))
         return image
 
@@ -139,7 +140,8 @@ class ImageDataset(Dataset):
 
     def __getitem__(self, idx):
         image, text, idx_new = self.get(idx)
-        if not self.is_training: assert idx == idx_new, f'idx {idx} != idx_new {idx_new} during testing.'
+        if not self.is_training:
+            assert idx == idx_new, f'idx {idx} != idx_new {idx_new} during testing.'
 
         if self.is_training:
             image = self._process_training(image)
@@ -151,7 +153,8 @@ class ImageDataset(Dataset):
         length = tensor(len(text) + 1).to(dtype=torch.long)  # one for end token
         label = self.charset.get_labels(text, case_sensitive=self.case_sensitive)
         label = tensor(label).to(dtype=torch.long)
-        if self.one_hot_y: label = onehot(label, self.charset.num_classes)
+        if self.one_hot_y:
+            label = onehot(label, self.charset.num_classes)
 
         if self.return_idx:
             y = [label, length, idx_new]

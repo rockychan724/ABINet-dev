@@ -77,7 +77,8 @@ def _get_language_databaunch(config):
 
 def _get_databaunch(config):
     # An awkward way to reduce loadding data time during test
-    if config.global_phase == 'test': config.dataset_train_roots = config.dataset_test_roots
+    if config.global_phase == 'test':
+        config.dataset_train_roots = config.dataset_test_roots
     train_ds = _get_dataset(ImageDataset, config.dataset_train_roots, True, config)
     valid_ds = _get_dataset(ImageDataset, config.dataset_test_roots, False, config)
     data = ImageDataBunch.create(
