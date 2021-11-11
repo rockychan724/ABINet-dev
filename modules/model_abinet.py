@@ -12,7 +12,8 @@ class ABINetModel(nn.Module):
         self.max_length = config.dataset_max_length + 1  # additional stop token
         self.vision = BaseVision(config)
         self.language = BCNLanguage(config)
-        if self.use_alignment: self.alignment = BaseAlignment(config)
+        if self.use_alignment:
+            self.alignment = BaseAlignment(config)
 
     def forward(self, images, *args):
         v_res = self.vision(images)
