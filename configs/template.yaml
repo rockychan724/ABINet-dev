@@ -48,8 +48,8 @@ training:
 optimizer:
   type: Adadelta # Adadelta, Adam
   true_wd: False
-  wd: 0. # 0.001
-  bn_wd: False
+  wd: 0. # 0.001  weight decay
+  bn_wd: False # controls if weight decay is applied to BatchNorm layers and bias
   args: {
     # betas: !!python/tuple [0.9, 0.99], # betas=(0.9,0.99) for AdamW
     # betas: !!python/tuple [0.9, 0.999], # for default Adam 

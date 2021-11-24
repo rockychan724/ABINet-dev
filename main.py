@@ -147,12 +147,13 @@ def _get_learner(config, data, model, local_rank=None):
                     start_iters=config.training_start_iters,
                     stats_iters=config.training_stats_iters)]
     else:
-        learner.callbacks += [
-            DumpPrediction(learn=learner,
-                           dataset='-'.join([Path(p).name for p in config.dataset_test_roots]), charset_path=config.dataset_charset_path,
-                           model_eval=config.model_eval,
-                           debug=config.global_debug,
-                           image_only=config.global_image_only)]
+        pass
+        # learner.callbacks += [
+        #     DumpPrediction(learn=learner,
+        #                    dataset='-'.join([Path(p).name for p in config.dataset_test_roots]), charset_path=config.dataset_charset_path,
+        #                    model_eval=config.model_eval,
+        #                    debug=config.global_debug,
+        #                    image_only=config.global_image_only)]
 
     learner.rank = local_rank
     if local_rank is not None:
