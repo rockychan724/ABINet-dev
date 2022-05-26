@@ -3,6 +3,7 @@ import logging
 
 from fastai.callbacks.general_sched import GeneralScheduler, TrainingPhase
 from fastai.vision import *
+from thop import profile
 from torch.backends import cudnn
 
 from callbacks import DumpPrediction, IterationCallback, TextAccuracy, TopKTextAccuracy
@@ -236,6 +237,16 @@ def main():
     logging.info('Construct learner.')
     learner = _get_learner(config, data, model, args.local_rank)
 
+    ##########################
+    # print model parameter size and FLOPs
+    ##########################
+    print("****** print model size: ")
+    dummy_input = torch.randn(10, 3, 32, 128).cuda()
+    flops, params = profile(model, inputs=(dummy_input,))
+    flops = flops / dummy_input.size(0)
+    print('flops:{}'.format(flops))
+    print('params:{}'.format(params))
+
     if config.global_phase == 'train':
         logging.info('Start training.')
         learner.fit(epochs=config.training_epochs,
@@ -248,6 +259,11 @@ def main():
                   f'ted = {last_metrics[3]:6.3f},  ned = {last_metrics[4]:6.0f},  ' \
                   f'ted/w = {last_metrics[5]:6.3f}, '
         logging.info(log_str)
+        total_time = model.total_time
+        total_num = model.total_num
+        print("total num: {}".format(total_num))
+        print("total time: {} s.".format(total_time))
+        print("average speed: {} ms/image. FPS: {}".format(total_time / total_num * 1000, total_num / total_time))
 
 
 if __name__ == '__main__':

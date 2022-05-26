@@ -1,3 +1,4 @@
+from time import time
 from fastai.vision import *
 
 from .model_alignment import BaseAlignment
@@ -13,8 +14,19 @@ class ABINetIterModel(nn.Module):
         self.vision = BaseVision(config)
         self.language = BCNLanguage(config)
         self.alignment = BaseAlignment(config)
+        self.total_time = 0.0
+        self.total_num = 0
 
     def forward(self, images, *args):
+        torch.cuda.synchronize()
+        start = time()
+        res = self._forward(images)
+        end = time()
+        self.total_time += (end - start)
+        self.total_num += images.size(0)
+        return res
+
+    def _forward(self, images):
         v_res = self.vision(images)
         a_res = v_res
         all_l_res, all_a_res = [], []
@@ -30,3 +42,4 @@ class ABINetIterModel(nn.Module):
             return all_a_res, all_l_res, v_res
         else:
             return a_res, all_l_res[-1], v_res
+
