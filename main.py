@@ -240,12 +240,12 @@ def main():
     ##########################
     # print model parameter size and FLOPs
     ##########################
-    print("****** print model size: ")
-    dummy_input = torch.randn(10, 3, 32, 128).cuda()
-    flops, params = profile(model, inputs=(dummy_input,))
-    flops = flops / dummy_input.size(0)
-    print('flops:{}'.format(flops))
-    print('params:{}'.format(params))
+    # print("****** print model size: ")
+    # dummy_input = torch.randn(10, 3, 32, 128).cuda()
+    # flops, params = profile(model, inputs=(dummy_input,))
+    # flops = flops / dummy_input.size(0)
+    # print('flops:{}'.format(flops))
+    # print('params:{}'.format(params))
 
     if config.global_phase == 'train':
         logging.info('Start training.')
