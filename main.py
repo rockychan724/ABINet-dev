@@ -259,11 +259,11 @@ def main():
                   f'ted = {last_metrics[3]:6.3f},  ned = {last_metrics[4]:6.0f},  ' \
                   f'ted/w = {last_metrics[5]:6.3f}, '
         logging.info(log_str)
-        total_time = model.total_time
-        total_num = model.total_num
-        print("total num: {}".format(total_num))
-        print("total time: {} s.".format(total_time))
-        print("average speed: {} ms/image. FPS: {}".format(total_time / total_num * 1000, total_num / total_time))
+        # total_time = model.total_time
+        # total_num = model.total_num
+        # print("total num: {}".format(total_num))
+        # print("total time: {} s.".format(total_time))
+        # print("average speed: {} ms/image. FPS: {}".format(total_time / total_num * 1000, total_num / total_time))
 
 
 if __name__ == '__main__':
