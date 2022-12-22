@@ -225,45 +225,49 @@ def main():
         torch.cuda.set_device(args.local_rank)
         torch.distributed.init_process_group(backend='nccl', init_method='env://')
 
-    logging.info('Construct dataset.')
-    if config.global_stage == 'pretrain-language':
-        data = _get_language_databaunch(config)
-    else:
-        data = _get_databaunch(config)
-
     logging.info('Construct model.')
     model = _get_model(config)
 
-    logging.info('Construct learner.')
-    learner = _get_learner(config, data, model, args.local_rank)
+    results = []
+    test_roots = config.dataset_test_roots
+    for test_root in test_roots:
+        config.dataset_test_roots = [test_root]
 
-    ##########################
-    # print model parameter size and FLOPs
-    ##########################
-    # print("****** print model size: ")
-    # dummy_input = torch.randn(10, 3, 32, 128).cuda()
-    # flops, params = profile(model, inputs=(dummy_input,))
-    # flops = flops / dummy_input.size(0)
-    # print('flops:{}'.format(flops))
-    # print('params:{}'.format(params))
+        logging.info('Construct dataset.')
+        if config.global_stage == 'pretrain-language':
+            data = _get_language_databaunch(config)
+        else:
+            data = _get_databaunch(config)
 
-    if config.global_phase == 'train':
-        logging.info('Start training.')
-        learner.fit(epochs=config.training_epochs,
-                    lr=config.optimizer_lr)
-    else:
-        logging.info('Start validate')
-        last_metrics = learner.validate()
-        log_str = f'eval loss = {last_metrics[0]:6.3f},  ' \
+        logging.info('Construct learner.')
+        learner = _get_learner(config, data, model, args.local_rank)
+
+        if config.global_phase == 'train':
+            logging.info('Start training.')
+            learner.fit(epochs=config.training_epochs,
+                        lr=config.optimizer_lr)
+        else:
+            logging.info('Start validate')
+            last_metrics = learner.validate()
+            results.append(last_metrics)
+            # log_str = f'eval loss = {last_metrics[0]:6.3f},  ' \
+            #           f'ccr = {last_metrics[1]:6.3f},  cwr = {last_metrics[2]:6.3f},  ' \
+            #           f'ted = {last_metrics[3]:6.3f},  ned = {last_metrics[4]:6.0f},  ' \
+            #           f'ted/w = {last_metrics[5]:6.3f}, '
+            # logging.info(log_str)
+            # total_time = model.total_time
+            # total_num = model.total_num
+            # print("total num: {}".format(total_num))
+            # print("total time: {} s.".format(total_time))
+            # print("average speed: {} ms/image. FPS: {}".format(total_time / total_num * 1000, total_num / total_time))
+
+    names = ["IIIT5k_3000", "SVT", "SVTP", "IC13_857", "IC15_1811", "CUTE80"]
+    for name, last_metrics in zip(names, results):
+        log_str = f'{name}\n eval loss = {last_metrics[0]:6.3f},  ' \
                   f'ccr = {last_metrics[1]:6.3f},  cwr = {last_metrics[2]:6.3f},  ' \
                   f'ted = {last_metrics[3]:6.3f},  ned = {last_metrics[4]:6.0f},  ' \
                   f'ted/w = {last_metrics[5]:6.3f}, '
         logging.info(log_str)
-        # total_time = model.total_time
-        # total_num = model.total_num
-        # print("total num: {}".format(total_num))
-        # print("total time: {} s.".format(total_time))
-        # print("average speed: {} ms/image. FPS: {}".format(total_time / total_num * 1000, total_num / total_time))
 
 
 if __name__ == '__main__':
