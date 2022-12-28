@@ -14,11 +14,11 @@ dataset:
     batch_size: 128
   }
   test: {
-    roots: [ 'data/evaluation/IIIT5k_3000',
+     roots: [ 'data/evaluation/IC13_857',
              'data/evaluation/SVT',
-             'data/evaluation/SVTP',
-             'data/evaluation/IC13_857',
+             'data/evaluation/IIIT5k_3000',
              'data/evaluation/IC15_1811',
+             'data/evaluation/SVTP',
              'data/evaluation/CUTE80' ],
     batch_size: 128
   }

@@ -11,20 +11,20 @@ dataset:
              'data/training/MJ/MJ_test/',
              'data/training/MJ/MJ_valid/',
              'data/training/ST' ],
-    batch_size: 384
+    batch_size: 450
   }
   test: {
-    roots: [ 'data/evaluation/IIIT5k_3000',
+     roots: [ 'data/evaluation/IC13_857',
              'data/evaluation/SVT',
-             'data/evaluation/SVTP',
-             'data/evaluation/IC13_857',
+             'data/evaluation/IIIT5k_3000',
              'data/evaluation/IC15_1811',
+             'data/evaluation/SVTP',
              'data/evaluation/CUTE80' ],
-    batch_size: 384
+    batch_size: 450
   }
   data_aug: True
   multiscales: False
-  num_workers: 14
+  num_workers: 20
 
 training:
   epochs: 10

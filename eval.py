@@ -261,13 +261,14 @@ def main():
             # print("total time: {} s.".format(total_time))
             # print("average speed: {} ms/image. FPS: {}".format(total_time / total_num * 1000, total_num / total_time))
 
-    names = ["IIIT5k_3000", "SVT", "SVTP", "IC13_857", "IC15_1811", "CUTE80"]
-    for name, last_metrics in zip(names, results):
-        log_str = f'{name}\n eval loss = {last_metrics[0]:6.3f},  ' \
+    res = "IC13_857 SVT IIIT5k_3000 IC15_1811 SVTP CUTE80\n"
+    for last_metrics in results:
+        log_str = f'eval loss = {last_metrics[0]:6.3f},  ' \
                   f'ccr = {last_metrics[1]:6.3f},  cwr = {last_metrics[2]:6.3f},  ' \
                   f'ted = {last_metrics[3]:6.3f},  ned = {last_metrics[4]:6.0f},  ' \
-                  f'ted/w = {last_metrics[5]:6.3f}, '
-        logging.info(log_str)
+                  f'ted/w = {last_metrics[5]:6.3f}, \n'
+        res += log_str
+    logging.info(res)
 
 
 if __name__ == '__main__':

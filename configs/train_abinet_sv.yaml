@@ -11,20 +11,20 @@ dataset:
              'data/training/MJ/MJ_test/',
              'data/training/MJ/MJ_valid/',
              'data/training/ST' ],
-    batch_size: 384
+    batch_size: 500
   }
   test: {
-    roots: [ 'data/evaluation/IIIT5k_3000',
+    roots: [ 'data/evaluation/IC13_857',
              'data/evaluation/SVT',
-             'data/evaluation/SVTP',
-             'data/evaluation/IC13_857',
+             'data/evaluation/IIIT5k_3000',
              'data/evaluation/IC15_1811',
+             'data/evaluation/SVTP',
              'data/evaluation/CUTE80' ],
-    batch_size: 384
+    batch_size: 500
   }
   data_aug: True
   multiscales: False
-  num_workers: 14
+  num_workers: 20
 
 training:
   epochs: 10
@@ -53,14 +53,14 @@ model:
   ensemble: ''
   use_vision: False
   vision: {
-    checkpoint: workdir/pretrain-vision-model-sv/best-pretrain-vision-model-sv.pth,
+    checkpoint: workdir_origin/pretrain-vision-model-sv/best-pretrain-vision-model-sv.pth,
     loss_weight: 1.,
     attention: 'attention',
     backbone: 'transformer',
     backbone_ln: 2,
   }
   language: {
-    checkpoint: workdir/pretrain-language-model/pretrain-language-model.pth,
+    checkpoint: workdir_origin/pretrain-language-model/pretrain-language-model.pth,
     num_layers: 4,
     loss_weight: 1.,
     detach: True,
