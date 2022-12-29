@@ -313,8 +313,12 @@ class MyConcatDataset(ConcatDataset):
         return getattr(self.datasets[0], k)
 
 
-if __name__ == "__main__":
-    Logger.init("workdir_temp", "train-abinet", "train")
+def test_logger():
+    Logger.init("temp_workdir", "train-abinet", "train")
     Logger.enable_file()
     logging.info("Hello")
     logging.info("World")
+
+
+if __name__ == '__main__':
+    test_logger()
