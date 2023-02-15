@@ -8,11 +8,11 @@ global:
 dataset:
   train: {
     roots: [ 'data/WikiText-103.csv' ],
-    batch_size: 4096
+    batch_size: 8192
   }
   test: {
     roots: [ 'data/WikiText-103_eval_d1.csv' ],
-    batch_size: 4096
+    batch_size: 8192
   }
 
 training:

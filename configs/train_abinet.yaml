@@ -1,9 +1,9 @@
 global:
-  name: train-abinet
+  name: train-abinet-v0.8
   phase: train
   stage: train-super
   workdir: workdir
-  seed: ~
+  seed: 0
 
 dataset:
   train: {
@@ -53,14 +53,14 @@ model:
   ensemble: ''
   use_vision: False
   vision: {
-    checkpoint: workdir_origin/pretrain-vision-model/best-pretrain-vision-model.pth,
+    checkpoint: workdir/pretrain-vision-model-v0.5/best-pretrain-vision-model.pth,
     loss_weight: 1.,
     attention: 'position',
     backbone: 'transformer',
     backbone_ln: 3,
   }
   language: {
-    checkpoint: workdir_origin/pretrain-language-model/pretrain-language-model.pth,
+    checkpoint: workdir/pretrain-language-model-v0.7/best-pretrain-language-model.pth,
     num_layers: 4,
     loss_weight: 1.,
     detach: True,

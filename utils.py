@@ -173,6 +173,7 @@ class Logger(object):
             pass
         config_path = os.path.join(output_dir, f'{phase}.txt')
         Logger._handle = logging.FileHandler(config_path)
+        Logger._handle.setFormatter(logging.Formatter(format))
         Logger._root = logging.getLogger()
 
     @staticmethod
@@ -310,3 +311,10 @@ class MyDataParallel(nn.DataParallel):
 class MyConcatDataset(ConcatDataset):
     def __getattr__(self, k):
         return getattr(self.datasets[0], k)
+
+
+if __name__ == "__main__":
+    Logger.init("workdir_temp", "train-abinet", "train")
+    Logger.enable_file()
+    logging.info("Hello")
+    logging.info("World")
