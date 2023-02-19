@@ -236,7 +236,8 @@ class TextAccuracy(Callback):
                 self.correct_num_word / self.total_num_word,
                 self.total_ed,
                 self.total_ned,
-                self.total_ed / self.total_num_word]
+                self.total_ed / self.total_num_char,
+                self.total_ned / (self.total_num_word)]
         return add_metrics(last_metrics, mets)
 
     def decode(self, logit):
