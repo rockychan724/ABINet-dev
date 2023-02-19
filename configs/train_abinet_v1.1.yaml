@@ -1,0 +1,70 @@
+global:
+  name: train-abinet-v1.1
+  phase: train
+  stage: train-super
+  workdir: workdir
+  seed: 0
+
+dataset:
+  train: {
+    roots: [ '/home/chenlei/data3/SEED/Syn90k',
+             '/home/chenlei/data3/SEED/SynthText' ],
+    batch_size: 450
+  }
+  test: {
+     roots: [ 'data/evaluation/IC13_857',
+             'data/evaluation/SVT',
+             'data/evaluation/IIIT5k_3000',
+             'data/evaluation/IC15_1811',
+             'data/evaluation/SVTP',
+             'data/evaluation/CUTE80' ],
+    batch_size: 450
+  }
+  data_aug: True
+  multiscales: False
+  num_workers: 20
+
+training:
+  epochs: 10
+  show_iters: 50
+  eval_iters: 3000
+  save_iters: 3000
+
+optimizer:
+  type: Adam
+  true_wd: False
+  wd: 0.0
+  bn_wd: False
+  clip_grad: 20
+  lr: 0.0001
+  args: {
+    betas: !!python/tuple [ 0.9, 0.999 ], # for default Adam
+  }
+  scheduler: {
+    periods: [ 6, 4 ],
+    gamma: 0.1,
+  }
+
+model:
+  name: 'modules.model_abinet_iter.ABINetIterModel'
+  iter_size: 3
+  ensemble: ''
+  use_vision: False
+  vision: {
+    checkpoint: workdir/pretrain-vision-model-v1.0/best-pretrain-vision-model-v1.0.pth,
+    loss_weight: 1.,
+    embedding_loss_weight: 1.,
+    attention: 'position',
+    backbone: 'transformer',
+    backbone_ln: 3,
+  }
+  language: {
+    checkpoint: workdir/pretrain-language-model-v0.7/best-pretrain-language-model.pth,
+    num_layers: 4,
+    loss_weight: 1.,
+    detach: True,
+    use_self_attn: False
+  }
+  alignment: {
+    loss_weight: 1.,
+  }
