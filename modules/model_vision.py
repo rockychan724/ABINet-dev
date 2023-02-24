@@ -47,11 +47,11 @@ class BaseVision(Model):
         features = self.backbone(images)  # (N, E, H, W)  # [n, 512, 8, 32]
         # TODO: backbone 后面接一个 embedding，添加一个 loss
 
-        embedding_vector = self.embedding(features)
+        embedding_vector = self.embedding(features)  # [450, 300]
         # embedding_vector = np.zeros((features.shape[0], 300))
 
         # TODO: 添加
-        attn_vecs, attn_scores = self.attention(features)  # (N, T, E), (N, T, H, W)  # [n, 26, 512], [n, 26, 8, 32]
+        attn_vecs, attn_scores = self.attention(features, embedding_vector)  # (N, T, E), (N, T, H, W)  # [n, 26, 512], [n, 26, 8, 32]
         logits = self.cls(attn_vecs)  # (N, T, C)  # [n, 26, 37]
         pt_lengths = self._get_length(logits)
 

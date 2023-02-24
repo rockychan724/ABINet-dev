@@ -163,6 +163,7 @@ flycheck_*.el
 
 # data
 data
+data_with_embedding
 
 # workdir
 workdir*

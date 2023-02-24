@@ -68,9 +68,12 @@ class PositionAttention(nn.Module):
         self.pos_encoder = PositionalEncoding(in_channels, dropout=0, max_len=max_length)
         self.project = nn.Linear(in_channels, in_channels)
 
-    def forward(self, x):
+        # self.embedding_func = nn.Embedding(num_embeddings, embedding_dim)
+        self.embedding_func = nn.Linear(300, 512)
+
+    def forward(self, x, embedding_vector):
         N, E, H, W = x.size()
-        k, v = x, x  # (N, E, H, W)
+        k, v = x, x  # (N, E, H, W)  # [450, 512, 8, 32]
 
         # calculate key vector
         features = []
@@ -80,12 +83,14 @@ class PositionAttention(nn.Module):
         for i in range(0, len(self.k_decoder) - 1):
             k = self.k_decoder[i](k)
             k = k + features[len(self.k_decoder) - 2 - i]
-        k = self.k_decoder[-1](k)
+        k = self.k_decoder[-1](k)  # [450, 512, 8, 32]
 
         # calculate query vector
         # TODO q=f(q,k)
-        zeros = x.new_zeros((self.max_length, N, E))  # (T, N, E)
-        q = self.pos_encoder(zeros)  # (T, N, E)
+        # zeros = x.new_zeros((self.max_length, N, E))  # (T, N, E)  # [26, 450, 512]
+        init_with_embedding = self.embedding_func(embedding_vector)  # [450, 512]
+        init_with_embedding = init_with_embedding.repeat(self.max_length, 1, 1)  # [26, 450, 512]
+        q = self.pos_encoder(init_with_embedding)  # (T, N, E)
         q = q.permute(1, 0, 2)  # (N, T, E)
         q = self.project(q)  # (N, T, E)
 
