@@ -12,7 +12,11 @@
 # v1.0
 # CUDA_VISIBLE_DEVICES=0,1 python main.py --config=configs/pretrain_vision_model_v1.0.yaml
 # v1.2
-CUDA_VISIBLE_DEVICES=0,1 python main.py --config=configs/pretrain_vision_model_v1.2.yaml
+# CUDA_VISIBLE_DEVICES=0,1 python main.py --config=configs/pretrain_vision_model_v1.2.yaml
+# v1.3
+# CUDA_VISIBLE_DEVICES=0,1 python main.py --config=configs/pretrain_vision_model_v1.3.yaml
+# v1.4
+CUDA_VISIBLE_DEVICES=0,1 python main.py --config=configs/pretrain_vision_model_v1.4.yaml
 
 # Pre-train Language model
 # v0.7
