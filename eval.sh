@@ -1,5 +1,5 @@
-CUDA_VISIBLE_DEVICES=0 python main.py \
-    --config configs/train_abinet_wo_iter.yaml \
+CUDA_VISIBLE_DEVICES=0 python eval.py \
+    --config configs/pretrain_vision_model_v1.4.yaml \
     --phase test \
-    --checkpoint workdir/train-abinet-wo-iter-v0.9/best-train-abinet-wo-iter-v0.9.pth \
-    # --model_eval language
+    --checkpoint workdir/pretrain-vision-model-v1.4/best-pretrain-vision-model-v1.4.pth \
+    --model_eval vision
