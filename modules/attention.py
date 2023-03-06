@@ -49,9 +49,10 @@ def decoder_layer(in_c, out_c, k=3, s=1, p=1, mode='nearest', scale_factor=None,
 
 class PositionAttention(nn.Module):
     def __init__(self, max_length, in_channels=512, num_channels=64,
-                 h=8, w=32, mode='nearest', **kwargs):
+                 h=8, w=32, mode='nearest', init_with_embedding=False, **kwargs):
         super().__init__()
         self.max_length = max_length
+        self.init_with_embedding = init_with_embedding
         self.k_encoder = nn.Sequential(
             encoder_layer(in_channels, num_channels, s=(1, 2)),
             encoder_layer(num_channels, num_channels, s=(2, 2)),
@@ -71,7 +72,7 @@ class PositionAttention(nn.Module):
         # self.embedding_func = nn.Embedding(num_embeddings, embedding_dim)
         self.embedding_func = nn.Linear(300, 512)
 
-    def forward(self, x, embedding_vector):
+    def forward(self, x, embedding_vector=None):
         N, E, H, W = x.size()
         k, v = x, x  # (N, E, H, W)  # [450, 512, 8, 32]
 
@@ -87,10 +88,12 @@ class PositionAttention(nn.Module):
 
         # calculate query vector
         # TODO q=f(q,k)
-        # zeros = x.new_zeros((self.max_length, N, E))  # (T, N, E)  # [26, 450, 512]
-        init_with_embedding = self.embedding_func(embedding_vector)  # [450, 512]
-        init_with_embedding = init_with_embedding.repeat(self.max_length, 1, 1)  # [26, 450, 512]
-        q = self.pos_encoder(init_with_embedding)  # (T, N, E)
+        if self.init_with_embedding:
+            init_state = self.embedding_func(embedding_vector)  # [450, 512]
+            init_state = init_state.repeat(self.max_length, 1, 1)  # [26, 450, 512]
+        else:
+            init_state = x.new_zeros((self.max_length, N, E))  # (T, N, E)  # [26, 450, 512]
+        q = self.pos_encoder(init_state)  # (T, N, E)
         q = q.permute(1, 0, 2)  # (N, T, E)
         q = self.project(q)  # (N, T, E)
 

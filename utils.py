@@ -10,6 +10,9 @@ from matplotlib import colors
 from matplotlib import pyplot as plt
 from torch import Tensor, nn
 from torch.utils.data import ConcatDataset
+from transformers import BertTokenizer, GPT2Tokenizer
+
+device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
 
 class CharsetMapper(object):
@@ -113,6 +116,109 @@ class CharsetMapper(object):
     @property
     def alphabet_labels(self):
         return self.get_labels(self.alphabets, padding=False)
+
+
+class TokenLabelConverter(object):
+    """ Convert between text-label and text-index """
+
+    def __init__(self,
+                 character='0123456789abcdefghijklmnopqrstuvwxyz',
+                 max_length=30):
+        # character (str): set of the possible characters.
+        # [GO] for the start token of the attention decoder. [s] for end-of-sentence token.
+        self.SPACE = '[s]'
+        self.GO = '[GO]'
+
+        self.list_token = [self.GO, self.SPACE]
+        self.character = self.list_token + list(character)
+
+        self.dict = {word: i for i, word in enumerate(self.character)}
+        self.batch_max_length = max_length + len(self.list_token)
+        self.bpe_tokenizer = GPT2Tokenizer.from_pretrained("gpt2")
+        self.wp_tokenizer = BertTokenizer.from_pretrained("bert-base-uncased")
+
+    def encode(self, text):
+        """ convert text-label into text-index.
+        """
+        batch_text = torch.LongTensor(len(text), self.batch_max_length).fill_(self.dict[self.GO])
+        for i, t in enumerate(text):
+            txt = [self.GO] + list(t) + [self.SPACE]
+            txt = [self.dict[char] for char in txt]
+            batch_text[i][:len(txt)] = torch.LongTensor(txt)  # batch_text[:, 0] = [GO] token
+        return batch_text.to(device)
+
+    def char_encode(self, text: str, case_sensitive=False):
+        """ convert text-label into text-index.
+        """
+        if not case_sensitive:
+            text = text.lower()
+        text_tensor = torch.LongTensor(self.batch_max_length).fill_(self.dict[self.GO])
+        padding_text = [self.GO] + list(text) + [self.SPACE]
+        encoded_text = [self.dict[c] for c in padding_text]
+        text_tensor[:len(encoded_text)] = torch.LongTensor(encoded_text)
+        return text_tensor
+
+        # batch_len = torch.LongTensor(len(text), 2).fill_(self.dict[self.GO])
+        # batch_text = torch.LongTensor(len(text), self.batch_max_length).fill_(self.dict[self.GO])
+        # for i, t in enumerate(text):
+        #     length = len(t)
+        #     batch_len[i][1] = torch.LongTensor([length])  # batch_text[:, 0] = [GO] token
+        #
+        #     txt = [self.GO] + list(t) + [self.SPACE]
+        #     txt = [self.dict[char] for char in txt]
+        #     batch_text[i][:len(txt)] = torch.LongTensor(txt)
+        #
+        # return batch_len.to(device), batch_text.to(device)
+
+    def char_decode(self, text_index, length):
+        """ convert text-index into text-label. """
+        texts = []
+        for index, l in enumerate(length):
+            text = ''.join([self.character[i] for i in text_index[index, :l-2]])
+            texts.append(text)
+        return texts
+
+    def bpe_encode(self, text, case_sensitive=False):
+        if not case_sensitive:
+            text = text.lower()
+        text_tensor = torch.LongTensor(self.batch_max_length).fill_(self.dict[self.GO])
+        token = self.bpe_tokenizer(text)['input_ids']
+        encoded_text = [1] + token + [2]
+        text_tensor[:len(encoded_text)] = torch.LongTensor(encoded_text)
+        return text_tensor
+
+        # batch_text = torch.LongTensor(len(text), self.batch_max_length).fill_(self.dict[self.GO])
+        # for i, t in enumerate(text):
+        #     token = self.bpe_tokenizer(t)['input_ids']
+        #     txt = [1] + token + [2]
+        #     batch_text[i][:len(txt)] = torch.LongTensor(txt)
+        # return batch_text.to(device)
+
+    def bpe_decode(self, text_index, length):
+        """ convert text-index into text-label. """
+        texts = []
+        for index, l in enumerate(length):
+            tokenstr = self.bpe_tokenizer.decode(text_index[index, :])
+            texts.append(tokenstr)
+        return texts
+
+    def wp_encode(self, text, case_sensitive=False):
+        if not case_sensitive:
+            text = text.lower()
+        wp_target = self.wp_tokenizer(text, padding='max_length', max_length=self.batch_max_length, truncation=True, return_tensors="pt")
+        return wp_target["input_ids"][0]  # dtype=torch.int64
+
+        # wp_target = self.wp_tokenizer(text, padding='max_length', max_length=self.batch_max_length, truncation=True, return_tensors="pt")
+        # return wp_target["input_ids"].to(device)
+
+    def wp_decode(self, text_index, length):
+        """ convert text-index into text-label. """
+        texts = []
+        for index, l in enumerate(length):
+            tokenstr = self.wp_tokenizer.decode(text_index[index, :])
+            tokenlist = tokenstr.split()
+            texts.append(''.join(tokenlist))
+        return texts
 
 
 class Timer(object):

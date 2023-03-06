@@ -7,7 +7,9 @@ from fastai.vision import *
 from torch.nn.parallel import DistributedDataParallel
 from torchvision import transforms
 
-from utils import CharsetMapper, Timer, blend_mask
+from utils import CharsetMapper, Timer, blend_mask, TokenLabelConverter
+
+device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
 
 class IterationCallback(LearnerTensorboardWriter):
@@ -120,9 +122,11 @@ class IterationCallback(LearnerTensorboardWriter):
             log_str = f'epoch {epoch} iter {iteration}: eval loss = {last_metrics[0]:6.4f},  ' \
                       f'ccr = {last_metrics[1]:6.4f},  cwr = {last_metrics[2]:6.4f},  ' \
                       f'ted = {last_metrics[3]:6.4f},  ned = {last_metrics[4]:6.4f},  ' \
-                      f'ted/w = {last_metrics[5]:6.4f}, '
+                      f'ted/c = {last_metrics[5]:6.4f},  ned/w = {last_metrics[6]:6.3f},  ' \
+                      f'char_acc = {last_metrics[7]:6.4f},  bpe_acc = {last_metrics[8]:6.4f},  ' \
+                      f'wp_acc = {last_metrics[9]:6.4f}. '
             logging.info(log_str)
-            names = ['eval_loss', 'ccr', 'cwr', 'ted', 'ned', 'ted/w']
+            names = ['eval_loss', 'ccr', 'cwr', 'ted', 'ned', 'ted/c', 'ned/w', 'char_acc', 'bpe_acc', 'wp_acc']
             self._write_metrics(iteration, names, last_metrics)
 
             # 3. Save best model
@@ -165,13 +169,14 @@ class IterationCallback(LearnerTensorboardWriter):
 
 
 class TextAccuracy(Callback):
-    _names = ['ccr', 'cwr', 'ted', 'ned', 'ted/w']
+    _names = ['ccr', 'cwr', 'ted', 'ned', 'ted/c', 'ned/w', 'char_acc', 'bpe_acc', 'wp_acc']
 
     def __init__(self, charset_path, max_length, case_sensitive, model_eval):
         self.charset_path = charset_path
-        self.max_length = max_length + 1
+        self.max_length = max_length + 2
         self.case_sensitive = case_sensitive
         self.charset = CharsetMapper(charset_path, self.max_length)
+        self.converter = TokenLabelConverter(max_length=max_length)
         self.names = self._names
 
         self.model_eval = model_eval or 'alignment'
@@ -184,6 +189,11 @@ class TextAccuracy(Callback):
         self.correct_num_word = 0.
         self.total_ed = 0.
         self.total_ned = 0.
+
+        self.char_n_correct = 0.
+        self.bpe_n_correct = 0.
+        self.wp_n_correct = 0.
+        self.out_n_correct = 0.
 
     def _get_output(self, last_output):
         if isinstance(last_output, (tuple, list)):
@@ -203,41 +213,122 @@ class TextAccuracy(Callback):
 
     def on_batch_end(self, last_output, last_target, **kwargs):
         output = self._get_output(last_output)
-        logits, pt_lengths = output['logits'], output['pt_lengths']
-        pt_text, pt_scores, pt_lengths_ = self.decode(logits)
-        assert (pt_lengths == pt_lengths_).all(), f'{pt_lengths} != {pt_lengths_} for {pt_text}'
-        last_output = self._update_output(last_output, {'pt_text': pt_text, 'pt_scores': pt_scores})
+        char_preds, bpe_preds, wp_preds = output['logits']
+        batch_size = last_target[0].shape[0]
 
-        pt_text = [self.charset.trim(t) for t in pt_text]
-        label = last_target[0]
-        if label.dim() == 3: label = label.argmax(dim=-1)  # one-hot label
-        gt_text = [self.charset.get_text(l, trim=True) for l in label]
+        # char pred
+        _, char_pred_index = char_preds.topk(1, dim=-1, largest=True, sorted=True)
+        char_pred_index = char_pred_index.view(-1, self.converter.batch_max_length)
+        length_for_pred = torch.IntTensor([self.converter.batch_max_length - 1] * batch_size).to(device)
+        char_preds_str = self.converter.char_decode(char_pred_index[:, 1:], length_for_pred)
+        char_pred_prob = F.softmax(char_preds, dim=2)
+        char_pred_max_prob, _ = char_pred_prob.max(dim=2)
+        char_preds_max_prob = char_pred_max_prob[:, 1:]
 
-        for i in range(len(gt_text)):
-            if not self.case_sensitive:
-                gt_text[i], pt_text[i] = gt_text[i].lower(), pt_text[i].lower()
-            distance = ed.eval(gt_text[i], pt_text[i])
+        last_output = self._update_output(last_output, {'pt_char_text': char_preds_str, 'pt_char_scores': char_preds_max_prob})
+
+        # bpe pred
+        _, bpe_preds_index = bpe_preds.topk(1, dim=-1, largest=True, sorted=True)
+        bpe_preds_index = bpe_preds_index.view(-1, self.converter.batch_max_length)
+        bpe_preds_str = self.converter.bpe_decode(bpe_preds_index[:, 1:], length_for_pred)
+        bpe_preds_prob = F.softmax(bpe_preds, dim=2)
+        bpe_preds_max_prob, _ = bpe_preds_prob.max(dim=2)
+        bpe_preds_max_prob = bpe_preds_max_prob[:, 1:]
+        bpe_preds_index = bpe_preds_index[:, 1:]
+
+        # wp pred
+        _, wp_preds_index = wp_preds.topk(1, dim=-1, largest=True, sorted=True)
+        wp_preds_index = wp_preds_index.view(-1, self.converter.batch_max_length)
+        wp_preds_str = self.converter.wp_decode(wp_preds_index[:, 1:], length_for_pred)
+        wp_preds_prob = F.softmax(wp_preds, dim=2)
+        wp_preds_max_prob, _ = wp_preds_prob.max(dim=2)
+        wp_preds_max_prob = wp_preds_max_prob[:, 1:]
+        wp_preds_index = wp_preds_index[:, 1:]
+
+        labels = self.converter.char_decode(last_target[0][:, 1:], last_target[3])
+        for index, gt in enumerate(labels):
+            max_confidence_score = 0.0
+            out_pred = None
+
+            # char
+            char_pred = char_preds_str[index]
+            char_pred_max_prob = char_preds_max_prob[index]
+            char_pred_EOS = char_pred.find('[s]')
+            char_pred = char_pred[:char_pred_EOS]  # prune after "end of sentence" token ([s])
+            if char_pred == gt:
+                self.char_n_correct += 1
+            char_pred_max_prob = char_pred_max_prob[:char_pred_EOS + 1]
+            try:
+                char_confidence_score = char_pred_max_prob.cumprod(dim=0)[-1]
+            except:
+                char_confidence_score = 0.0
+            if char_confidence_score > max_confidence_score:
+                max_confidence_score = char_confidence_score
+                out_pred = char_pred
+
+            # bpe
+            bpe_pred = bpe_preds_str[index]
+            bpe_pred_max_prob = bpe_preds_max_prob[index]
+            bpe_pred_EOS = bpe_pred.find('#')
+            bpe_pred = bpe_pred[:bpe_pred_EOS]
+            if bpe_pred == gt:
+                self.bpe_n_correct += 1
+            bpe_pred_index = bpe_preds_index[index].cpu().tolist()
+            try:
+                bpe_pred_EOS_index = bpe_pred_index.index(2)
+            except:
+                bpe_pred_EOS_index = -1
+            bpe_pred_max_prob = bpe_pred_max_prob[:bpe_pred_EOS_index + 1]
+            try:
+                bpe_confidence_score = bpe_pred_max_prob.cumprod(dim=0)[-1]
+            except:
+                bpe_confidence_score = 0.0
+            if bpe_confidence_score > max_confidence_score:
+                max_confidence_score = bpe_confidence_score
+                out_pred = bpe_pred
+
+            # wp
+            wp_pred = wp_preds_str[index]
+            wp_pred_max_prob = wp_preds_max_prob[index]
+            wp_pred_EOS = wp_pred.find('[SEP]')
+            wp_pred = wp_pred[:wp_pred_EOS]
+            if wp_pred == gt:
+                self.wp_n_correct += 1
+            wp_pred_index = wp_preds_index[index].cpu().tolist()
+            try:
+                wp_pred_EOS_index = wp_pred_index.index(102)
+            except:
+                wp_pred_EOS_index = -1
+            wp_pred_max_prob = wp_pred_max_prob[:wp_pred_EOS_index + 1]
+            try:
+                wp_confidence_score = wp_pred_max_prob.cumprod(dim=0)[-1]
+            except:
+                wp_confidence_score = 0.0
+            if wp_confidence_score > max_confidence_score:
+                max_confidence_score = wp_confidence_score
+                out_pred = wp_pred
+
+            if out_pred == gt:
+                self.out_n_correct += 1
+            # print(f"out_pred: {out_pred}, gt: {gt}")
+            distance = ed.eval(out_pred, gt)
             self.total_ed += distance
-            self.total_ned += float(distance) / max(len(gt_text[i]), 1)
-
-            if gt_text[i] == pt_text[i]:
-                self.correct_num_word += 1
+            self.total_ned += float(distance) / max(len(gt), 1)
             self.total_num_word += 1
-
-            for j in range(min(len(gt_text[i]), len(pt_text[i]))):
-                if gt_text[i][j] == pt_text[i][j]:
-                    self.correct_num_char += 1
-            self.total_num_char += len(gt_text[i])
+            self.total_num_char += len(gt)
 
         return {'last_output': last_output}
 
     def on_epoch_end(self, last_metrics, **kwargs):
-        mets = [self.correct_num_char / self.total_num_char,
-                self.correct_num_word / self.total_num_word,
+        mets = [0,
+                self.out_n_correct / (self.total_num_word),
                 self.total_ed,
                 self.total_ned,
                 self.total_ed / self.total_num_char,
-                self.total_ned / (self.total_num_word)]
+                self.total_ned / (self.total_num_word),
+                self.char_n_correct / (self.total_num_word),
+                self.bpe_n_correct / (self.total_num_word),
+                self.wp_n_correct / (self.total_num_word)]
         return add_metrics(last_metrics, mets)
 
     def decode(self, logit):

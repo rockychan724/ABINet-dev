@@ -7,8 +7,13 @@ from fastai.vision import *
 from torch.backends import cudnn
 
 from callbacks import DumpPrediction, IterationCallback, TextAccuracy, TopKTextAccuracy
-from dataset import ImageDatasetWithEmbedding, TextDataset
-from losses import MultiLossesWithEmbedding
+from dataset import TextDataset
+# from dataset import ImageDataset
+# from dataset import ImageDatasetWithEmbedding as ImageDataset
+from dataset import ImageDatasetMGP as ImageDataset
+# from losses import MultiLosses
+# from losses import MultiLossesWithEmbedding as MultiLosses
+from losses import MultiLossesWithMGP as MultiLosses
 from utils import Config, Logger, MyDataParallel, MyConcatDataset
 
 
@@ -80,8 +85,8 @@ def _get_databaunch(config):
     # An awkward way to reduce loadding data time during test
     if config.global_phase == 'test':
         config.dataset_train_roots = config.dataset_test_roots
-    train_ds = _get_dataset(ImageDatasetWithEmbedding, config.dataset_train_roots, True, config)
-    valid_ds = _get_dataset(ImageDatasetWithEmbedding, config.dataset_test_roots, False, config)
+    train_ds = _get_dataset(ImageDataset, config.dataset_train_roots, True, config)
+    valid_ds = _get_dataset(ImageDataset, config.dataset_test_roots, False, config)
     data = ImageDataBunch.create(
         train_ds=train_ds,
         valid_ds=valid_ds,
@@ -132,7 +137,7 @@ def _get_learner(config, data, model, local_rank=None):
                       path=config.global_workdir,
                       metrics=metrics,
                       opt_func=partial(opt_type, **config.optimizer_args or dict()),
-                      loss_func=MultiLossesWithEmbedding(one_hot=config.dataset_one_hot_y))
+                      loss_func=MultiLosses(one_hot=config.dataset_one_hot_y))
     learner.split(lambda m: children(m))
 
     if config.global_phase == 'train':

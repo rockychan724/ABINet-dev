@@ -6,9 +6,15 @@ from fastai.vision import *
 # from thop import profile
 from torch.backends import cudnn
 
-from callbacks import DumpPrediction, IterationCallback, TextAccuracy, TopKTextAccuracy
-from dataset import ImageDatasetWithEmbedding, TextDataset
-from losses import MultiLossesWithEmbedding
+# from callbacks import DumpPrediction, IterationCallback, TextAccuracy, TopKTextAccuracy
+from callbacks_mgp import DumpPrediction, IterationCallback, TextAccuracy, TopKTextAccuracy
+# from dataset import TextDataset
+# from dataset import ImageDataset
+# from dataset import ImageDatasetWithEmbedding as ImageDataset
+from dataset import ImageDatasetMGP as ImageDataset
+# from losses import MultiLosses
+# from losses import MultiLossesWithEmbedding as MultiLosses
+from losses import MultiLossesWithMGP as MultiLosses
 from utils import Config, Logger, MyDataParallel, MyConcatDataset
 
 
@@ -81,8 +87,8 @@ def _get_databaunch(config):
     # An awkward way to reduce loadding data time during test
     if config.global_phase == 'test':
         config.dataset_train_roots = config.dataset_test_roots
-    train_ds = _get_dataset(ImageDatasetWithEmbedding, config.dataset_train_roots, True, config)
-    valid_ds = _get_dataset(ImageDatasetWithEmbedding, config.dataset_test_roots, False, config)
+    train_ds = _get_dataset(ImageDataset, config.dataset_train_roots, True, config)
+    valid_ds = _get_dataset(ImageDataset, config.dataset_test_roots, False, config)
     data = ImageDataBunch.create(
         train_ds=train_ds,
         valid_ds=valid_ds,
@@ -122,7 +128,7 @@ def _get_learner(config, data, model, local_rank=None):
     else:
         metrics = [TextAccuracy(
             charset_path=config.dataset_charset_path,
-            max_length=config.dataset_max_length + 1,
+            max_length=config.dataset_max_length,
             case_sensitive=config.dataset_eval_case_sensisitves,
             model_eval=config.model_eval)]
     opt_type = getattr(torch.optim, config.optimizer_type)
@@ -133,7 +139,7 @@ def _get_learner(config, data, model, local_rank=None):
                       path=config.global_workdir,
                       metrics=metrics,
                       opt_func=partial(opt_type, **config.optimizer_args or dict()),
-                      loss_func=MultiLossesWithEmbedding(one_hot=config.dataset_one_hot_y))
+                      loss_func=MultiLosses(one_hot=config.dataset_one_hot_y))
     learner.split(lambda m: children(m))
 
     if config.global_phase == 'train':
@@ -258,7 +264,9 @@ def main():
         log_str = f'eval loss = {last_metrics[0]:6.3f},  ' \
                   f'ccr = {last_metrics[1]:6.3f},  cwr = {last_metrics[2]:6.3f},  ' \
                   f'ted = {last_metrics[3]:6.3f},  ned = {last_metrics[4]:6.0f},  ' \
-                  f'ted/c = {last_metrics[5]:6.3f}, ned/w = {last_metrics[6]:6.3f}'
+                  f'ted/c = {last_metrics[5]:6.3f},  ned/w = {last_metrics[6]:6.3f},  ' \
+                  f'char_acc = {last_metrics[7]:6.4f},  bpe_acc = {last_metrics[8]:6.4f},  ' \
+                  f'wp_acc = {last_metrics[9]:6.4f}'
         logging.info(log_str)
         # total_time = model.total_time
         # total_num = model.total_num
