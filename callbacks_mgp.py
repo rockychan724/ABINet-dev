@@ -248,7 +248,7 @@ class TextAccuracy(Callback):
         labels = self.converter.char_decode(last_target[0][:, 1:], last_target[3])
         for index, gt in enumerate(labels):
             max_confidence_score = 0.0
-            out_pred = None
+            out_pred = ''
 
             # char
             char_pred = char_preds_str[index]
@@ -310,7 +310,6 @@ class TextAccuracy(Callback):
 
             if out_pred == gt:
                 self.out_n_correct += 1
-            # print(f"out_pred: {out_pred}, gt: {gt}")
             distance = ed.eval(out_pred, gt)
             self.total_ed += distance
             self.total_ned += float(distance) / max(len(gt), 1)

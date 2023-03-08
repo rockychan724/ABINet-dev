@@ -11,7 +11,7 @@ dataset:
              'data/training/MJ/MJ_test/',
              'data/training/MJ/MJ_valid/',
              'data/training/ST' ],
-    batch_size: 300
+    batch_size: 256
   }
   test: {
     roots: [ 'data/evaluation/IC13_857',
@@ -20,7 +20,7 @@ dataset:
              'data/evaluation/IC15_1811',
              'data/evaluation/SVTP',
              'data/evaluation/CUTE80' ],
-    batch_size: 300
+    batch_size: 256
   }
   data_aug: True
   multiscales: False
