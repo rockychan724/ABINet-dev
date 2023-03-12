@@ -6,7 +6,8 @@ from fastai.vision import *
 # from thop import profile
 from torch.backends import cudnn
 
-from callbacks import DumpPrediction, IterationCallback, TextAccuracy, TopKTextAccuracy
+# from callbacks import DumpPrediction, IterationCallback, TextAccuracy, TopKTextAccuracy
+from callbacks_mgp import DumpPrediction, IterationCallback, TextAccuracy, TopKTextAccuracy
 from dataset import TextDataset
 # from dataset import ImageDataset
 # from dataset import ImageDatasetWithEmbedding as ImageDataset
@@ -126,7 +127,7 @@ def _get_learner(config, data, model, local_rank=None):
     else:
         metrics = [TextAccuracy(
             charset_path=config.dataset_charset_path,
-            max_length=config.dataset_max_length + 1,
+            max_length=config.dataset_max_length,
             case_sensitive=config.dataset_eval_case_sensisitves,
             model_eval=config.model_eval)]
     opt_type = getattr(torch.optim, config.optimizer_type)

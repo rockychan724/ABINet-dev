@@ -8,7 +8,7 @@ from torch.backends import cudnn
 
 # from callbacks import DumpPrediction, IterationCallback, TextAccuracy, TopKTextAccuracy
 from callbacks_mgp import DumpPrediction, IterationCallback, TextAccuracy, TopKTextAccuracy
-# from dataset import TextDataset
+from dataset import TextDataset
 # from dataset import ImageDataset
 # from dataset import ImageDatasetWithEmbedding as ImageDataset
 from dataset import ImageDatasetMGP as ImageDataset
