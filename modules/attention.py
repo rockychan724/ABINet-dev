@@ -69,8 +69,15 @@ class PositionAttention(nn.Module):
         self.pos_encoder = PositionalEncoding(in_channels, dropout=0, max_len=max_length)
         self.project = nn.Linear(in_channels, in_channels)
 
-        # self.embedding_func = nn.Embedding(num_embeddings, embedding_dim)
-        self.embedding_func = nn.Linear(300, 512)
+        # Fix: `embedding_func` works only when use embedding init_state in v1.x,
+        # so when should limit `embedding_func` by the `init_with_embedding` signal.
+        if self.init_with_embedding:
+            self.embedding_func = nn.Linear(300, 512)
+
+        # Attention!!! In the model parameter of v2.0 and v2.1, there is `embedding_func`,
+        # which shouldn't be here.
+        # TODO: remove `embedding_func` parameter in v2.0 and v2.1
+        # self.embedding_func = nn.Linear(300, 512)
 
     def forward(self, x, embedding_vector=None):
         N, E, H, W = x.size()
