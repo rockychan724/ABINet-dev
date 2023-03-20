@@ -30,7 +30,7 @@ class MultiLosses(nn.Module):
             res[key] = merge(items)
         return res
 
-    def _ce_loss(self, output, gt_labels, gt_lengths, gt_embedding, idx=None, record=True):
+    def _ce_loss(self, output, gt_labels, gt_lengths, idx=None, record=True):
         loss_name = output.get('name')
         pt_logits, weight = output['logits'], output['loss_weight']
 
