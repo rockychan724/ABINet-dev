@@ -384,7 +384,7 @@ class TopKTextAccuracy(TextAccuracy):
     def on_epoch_end(self, last_metrics, **kwargs):
         mets = [self.correct_num_char / self.total_num_char,
                 self.correct_num_word / self.total_num_word,
-                0., 0., 0.]
+                0., 0., 0., 0.]
         return add_metrics(last_metrics, mets)
 
 
