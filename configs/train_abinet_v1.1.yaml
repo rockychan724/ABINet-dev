@@ -46,7 +46,7 @@ optimizer:
   }
 
 model:
-  name: 'modules.model_abinet_iter.ABINetIterModel'
+  name: 'modules.model_abinet_iter_embedding.ABINetIterModel'
   iter_size: 3
   ensemble: ''
   use_vision: False

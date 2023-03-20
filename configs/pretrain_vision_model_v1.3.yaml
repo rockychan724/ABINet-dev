@@ -48,7 +48,7 @@ optimizer:
   }
 
 model:
-  name: 'modules.model_vision.BaseVision'
+  name: 'modules.model_vision_embedding.BaseVision'
   checkpoint: ~
   vision: {
     loss_weight: 1.,

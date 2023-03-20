@@ -29,7 +29,7 @@ class BaseVision(Model):
             self.attention = PositionAttention(
                 max_length=config.dataset_max_length + 1,  # additional stop token
                 mode=mode,
-                init_with_embedding=True
+                init_with_embedding=True  # should be set to False before v1.1
             )
         elif config.model_vision_attention == 'attention':
             self.attention = Attention(
