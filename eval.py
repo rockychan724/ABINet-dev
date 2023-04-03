@@ -12,14 +12,14 @@ from torch.backends import cudnn
 # from losses import MultiLosses
 
 # v1.x
-# from callbacks import DumpPrediction, IterationCallback, TextAccuracy, TopKTextAccuracy
-# from dataset import ImageDatasetWithEmbedding as ImageDataset
-# from losses import MultiLossesWithEmbedding as MultiLosses
+from callbacks import DumpPrediction, IterationCallback, TextAccuracy, TopKTextAccuracy
+from dataset import ImageDatasetWithEmbedding as ImageDataset
+from losses import MultiLossesWithEmbedding as MultiLosses
 
 # v2.x
-from callbacks_mgp import DumpPrediction, IterationCallback, TextAccuracy, TopKTextAccuracy
-from dataset import ImageDatasetMGP as ImageDataset
-from losses import MultiLossesWithMGP as MultiLosses
+# from callbacks_mgp import DumpPrediction, IterationCallback, TextAccuracy, TopKTextAccuracy
+# from dataset import ImageDatasetMGP as ImageDataset
+# from losses import MultiLossesWithMGP as MultiLosses
 
 from dataset import TextDataset
 from utils import Config, Logger, MyDataParallel, MyConcatDataset
@@ -277,17 +277,17 @@ def main():
     res = "IC13_857 SVT IIIT5k_3000 IC15_1811 SVTP CUTE80\n"
     for last_metrics in results:
         # v0.x - v1.x
-        # log_str = f'eval loss = {last_metrics[0]:6.3f},  ' \
-        #           f'ccr = {last_metrics[1]:6.3f},  cwr = {last_metrics[2]:6.3f},  ' \
-        #           f'ted = {last_metrics[3]:6.3f},  ned = {last_metrics[4]:6.0f},  ' \
-        #           f'ted/c = {last_metrics[5]:6.3f}, ned/w = {last_metrics[6]:6.3f}\n'
-        # v2.x
         log_str = f'eval loss = {last_metrics[0]:6.3f},  ' \
                   f'ccr = {last_metrics[1]:6.3f},  cwr = {last_metrics[2]:6.3f},  ' \
                   f'ted = {last_metrics[3]:6.3f},  ned = {last_metrics[4]:6.0f},  ' \
-                  f'ted/c = {last_metrics[5]:6.3f},  ned/w = {last_metrics[6]:6.3f},  ' \
-                  f'char_acc = {last_metrics[7]:6.4f},  bpe_acc = {last_metrics[8]:6.4f},  ' \
-                  f'wp_acc = {last_metrics[9]:6.4f}\n'
+                  f'ted/c = {last_metrics[5]:6.3f}, ned/w = {last_metrics[6]:6.3f}\n'
+        # v2.x
+        # log_str = f'eval loss = {last_metrics[0]:6.3f},  ' \
+        #           f'ccr = {last_metrics[1]:6.3f},  cwr = {last_metrics[2]:6.3f},  ' \
+        #           f'ted = {last_metrics[3]:6.3f},  ned = {last_metrics[4]:6.0f},  ' \
+        #           f'ted/c = {last_metrics[5]:6.3f},  ned/w = {last_metrics[6]:6.3f},  ' \
+        #           f'char_acc = {last_metrics[7]:6.4f},  bpe_acc = {last_metrics[8]:6.4f},  ' \
+        #           f'wp_acc = {last_metrics[9]:6.4f}\n'
         res += log_str
     logging.info(res)
 

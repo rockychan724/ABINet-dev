@@ -5,6 +5,8 @@
 # CUDA_VISIBLE_DEVICES=0,1 python main.py --config=configs/train_abinet_wo_iter.yaml
 # v1.1
 # CUDA_VISIBLE_DEVICES=0,1 python main.py --config=configs/train_abinet_v1.1.yaml
+# v1.5
+CUDA_VISIBLE_DEVICES=0,1 python main.py --config=configs/train_abinet_v1.5.yaml
 
 # Pre-train Vision model
 # v0.5
@@ -24,7 +26,7 @@ export http_proxy=http://222.199.197.95:7890 https_proxy=http://222.199.197.95:7
 # v2.0
 # CUDA_VISIBLE_DEVICES=0,1 python main.py --config=configs/pretrain_vision_model_v2.0.yaml
 # v2.1
-CUDA_VISIBLE_DEVICES=0,1 python main.py --config=configs/pretrain_vision_model_v2.1.yaml
+# CUDA_VISIBLE_DEVICES=0,1 python main.py --config=configs/pretrain_vision_model_v2.1.yaml
 
 # Pre-train Language model
 # v0.7

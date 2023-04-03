@@ -6,20 +6,20 @@ from fastai.vision import *
 # from thop import profile
 from torch.backends import cudnn
 
-# v0.x-v1.x
+# # v0.x-v1.x
 # from callbacks import DumpPrediction, IterationCallback, TextAccuracy, TopKTextAccuracy
 # from dataset import ImageDataset
 # from losses import MultiLosses
 
 # v1.x
-# from callbacks import DumpPrediction, IterationCallback, TextAccuracy, TopKTextAccuracy
-# from dataset import ImageDatasetWithEmbedding as ImageDataset
-# from losses import MultiLossesWithEmbedding as MultiLosses
+from callbacks import DumpPrediction, IterationCallback, TextAccuracy, TopKTextAccuracy
+from dataset import ImageDatasetWithEmbedding as ImageDataset
+from losses import MultiLossesWithEmbedding as MultiLosses
 
-# v2.x
-from callbacks_mgp import DumpPrediction, IterationCallback, TextAccuracy, TopKTextAccuracy
-from dataset import ImageDatasetMGP as ImageDataset
-from losses import MultiLossesWithMGP as MultiLosses
+# # v2.x
+# from callbacks_mgp import DumpPrediction, IterationCallback, TextAccuracy, TopKTextAccuracy
+# from dataset import ImageDatasetMGP as ImageDataset
+# from losses import MultiLossesWithMGP as MultiLosses
 
 from dataset import TextDataset
 from utils import Config, Logger, MyDataParallel, MyConcatDataset
@@ -269,17 +269,17 @@ def main():
         logging.info('Start validate')
         last_metrics = learner.validate()
         # v0.x - v1.x
-        # log_str = f'eval loss = {last_metrics[0]:6.3f},  ' \
-        #           f'ccr = {last_metrics[1]:6.3f},  cwr = {last_metrics[2]:6.3f},  ' \
-        #           f'ted = {last_metrics[3]:6.3f},  ned = {last_metrics[4]:6.0f},  ' \
-        #           f'ted/c = {last_metrics[5]:6.3f}, ned/w = {last_metrics[6]:6.3f}'
-        # v2.x
         log_str = f'eval loss = {last_metrics[0]:6.3f},  ' \
                   f'ccr = {last_metrics[1]:6.3f},  cwr = {last_metrics[2]:6.3f},  ' \
                   f'ted = {last_metrics[3]:6.3f},  ned = {last_metrics[4]:6.0f},  ' \
-                  f'ted/c = {last_metrics[5]:6.3f},  ned/w = {last_metrics[6]:6.3f},  ' \
-                  f'char_acc = {last_metrics[7]:6.4f},  bpe_acc = {last_metrics[8]:6.4f},  ' \
-                  f'wp_acc = {last_metrics[9]:6.4f}'
+                  f'ted/c = {last_metrics[5]:6.3f}, ned/w = {last_metrics[6]:6.3f}'
+        # # v2.x
+        # log_str = f'eval loss = {last_metrics[0]:6.3f},  ' \
+        #           f'ccr = {last_metrics[1]:6.3f},  cwr = {last_metrics[2]:6.3f},  ' \
+        #           f'ted = {last_metrics[3]:6.3f},  ned = {last_metrics[4]:6.0f},  ' \
+        #           f'ted/c = {last_metrics[5]:6.3f},  ned/w = {last_metrics[6]:6.3f},  ' \
+        #           f'char_acc = {last_metrics[7]:6.4f},  bpe_acc = {last_metrics[8]:6.4f},  ' \
+        #           f'wp_acc = {last_metrics[9]:6.4f}'
         logging.info(log_str)
         # total_time = model.total_time
         # total_num = model.total_num
